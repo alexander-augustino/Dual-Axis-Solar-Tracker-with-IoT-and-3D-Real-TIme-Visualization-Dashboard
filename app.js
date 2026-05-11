@@ -32,23 +32,25 @@ function initWebSocket() {
     };
 }
 
-// Fungsi bantu untuk membuat label arah mata angin yang selalu menghadap kamera
-function createLabel(text, x, z, color = "#ffffff") {
+// Fungsi untuk membuat label teks (Sprite) agar selalu menghadap kamera
+function makeTextSprite(message, x, y, z, color = "white", fontSize = 32) {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
     canvas.width = 256;
     canvas.height = 128;
+    
+    context.font = "Bold " + fontSize + "px Poppins, Arial";
     context.fillStyle = color;
-    context.font = 'Bold 44px Poppins, Arial';
-    context.textAlign = 'center';
-    context.fillText(text, 128, 64);
-
+    context.textAlign = "center";
+    context.fillText(message, 128, 64);
+    
     const texture = new THREE.CanvasTexture(canvas);
-    const material = new THREE.SpriteMaterial({ map: texture });
-    const sprite = new THREE.Sprite(material);
-    sprite.position.set(x, 0.2, z);
+    const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+    const sprite = new THREE.Sprite(spriteMaterial);
+    
+    sprite.position.set(x, y, z);
     sprite.scale.set(1.5, 0.75, 1);
-    scene.add(sprite);
+    return sprite;
 }
 
 function init3D() {
@@ -59,30 +61,38 @@ function init3D() {
     renderer.setSize(container.clientWidth, container.clientHeight);
     container.appendChild(renderer.domElement);
 
-    // Tetap gunakan OrbitControls untuk navigasi bebas
+    // OrbitControls tetap ada (Pinch, Zoom, Scroll, Rotate)
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
     controls.rotateSpeed = 1.2;
-    controls.zoomSpeed = 1.5;
 
-    // --- NAVIGASI SUMBU & GRID ---
+    // --- NAVIGASI SUMBU & LABEL ---
     const axesHelper = new THREE.AxesHelper(6); 
     scene.add(axesHelper);
+
+    // Label Sumbu XYZ
+    scene.add(makeTextSprite("X (East)", 6.5, 0, 0, "#ff4d4d"));
+    scene.add(makeTextSprite("Y (Up)", 0, 6, 0, "#4dff4d"));
+    scene.add(makeTextSprite("Z (South)", 0, 0, 6.5, "#4d4dff"));
+
+    // Label 8 Arah Mata Angin di permukaan lantai (r=5.5)
+    const rLabel = 5.5;
+    const dLabel = rLabel * 0.707; // sin(45 deg)
+    
+    scene.add(makeTextSprite("UTARA (N)", 0, 0.1, -rLabel, "#00f2fe"));
+    scene.add(makeTextSprite("SELATAN (S)", 0, 0.1, rLabel, "#00f2fe"));
+    scene.add(makeTextSprite("TIMUR (E)", rLabel, 0.1, 0, "#ffdd00"));
+    scene.add(makeTextSprite("BARAT (W)", -rLabel, 0.1, 0, "#ffffff"));
+    
+    // Diagonal
+    scene.add(makeTextSprite("TL", dLabel, 0.1, -dLabel, "#aaaaaa", 24));
+    scene.add(makeTextSprite("BL", -dLabel, 0.1, -dLabel, "#aaaaaa", 24));
+    scene.add(makeTextSprite("TG", dLabel, 0.1, dLabel, "#aaaaaa", 24));
+    scene.add(makeTextSprite("BD", -dLabel, 0.1, dLabel, "#aaaaaa", 24));
+
     const gridHelper = new THREE.GridHelper(12, 12, 0x444444, 0x222222);
     scene.add(gridHelper);
-
-    // --- 8 ARAH MATA ANGIN ---
-    const dist = 5.5; 
-    createLabel("UTARA (N)", 0, -dist, "#00f2fe");
-    createLabel("SELATAN (S)", 0, dist, "#00f2fe");
-    createLabel("TIMUR (E)", dist, 0, "#ff4d4d");
-    createLabel("BARAT (W)", -dist, 0, "#ffffff");
-    const diag = dist * 0.707;
-    createLabel("TL", diag, -diag); 
-    createLabel("TG", diag, diag);  
-    createLabel("BD", -diag, diag); 
-    createLabel("BL", -diag, -diag);
 
     const ambientLight = new THREE.AmbientLight(0x404040, 2);
     scene.add(ambientLight);
@@ -91,7 +101,7 @@ function init3D() {
     scene.add(light);
 
     const domeGeo = new THREE.SphereGeometry(5, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2);
-    const domeMat = new THREE.MeshBasicMaterial({ color: 0x00f2fe, wireframe: true, transparent: true, opacity: 0.1 });
+    const domeMat = new THREE.MeshBasicMaterial({ color: 0x00f2fe, wireframe: true, transparent: true, opacity: 0.12 });
     dome = new THREE.Mesh(domeGeo, domeMat);
     scene.add(dome);
 
@@ -110,7 +120,7 @@ function animate() {
     const now = new Date();
     if(document.getElementById('localTime')) document.getElementById('localTime').innerText = now.toLocaleTimeString();
     if (isRealTimeMode) updateSunByTime(now);
-    controls.update(); // Update navigasi orbit setiap frame
+    controls.update(); // Navigasi dinamis
     renderer.render(scene, camera);
 }
 
