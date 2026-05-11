@@ -32,24 +32,33 @@ function initWebSocket() {
     };
 }
 
-// Fungsi untuk membuat label teks (Sprite) agar selalu menghadap kamera
-function makeTextSprite(message, x, y, z, color = "white", fontSize = 32) {
+// Fungsi untuk membuat label teks (Sprite) yang LEBIH BESAR & BOLD
+function makeTextSprite(message, x, y, z, color = "white", fontSize = 50) {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
-    canvas.width = 256;
-    canvas.height = 128;
+    
+    // Meningkatkan resolusi canvas agar tulisan tidak pecah saat di-zoom
+    canvas.width = 512; 
+    canvas.height = 256;
     
     context.font = "Bold " + fontSize + "px Poppins, Arial";
     context.fillStyle = color;
     context.textAlign = "center";
-    context.fillText(message, 128, 64);
+    context.textBaseline = "middle";
+    
+    // Menambahkan shadow tipis agar teks lebih terbaca di latar gelap
+    context.shadowColor = "black";
+    context.shadowBlur = 5;
+    
+    context.fillText(message, 256, 128);
     
     const texture = new THREE.CanvasTexture(canvas);
     const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
     const sprite = new THREE.Sprite(spriteMaterial);
     
     sprite.position.set(x, y, z);
-    sprite.scale.set(1.5, 0.75, 1);
+    // Skala disesuaikan agar teks terlihat proporsional namun jelas
+    sprite.scale.set(2.5, 1.25, 1); 
     return sprite;
 }
 
@@ -61,45 +70,43 @@ function init3D() {
     renderer.setSize(container.clientWidth, container.clientHeight);
     container.appendChild(renderer.domElement);
 
-    // OrbitControls tetap ada (Pinch, Zoom, Scroll, Rotate)
+    // KONFIGURASI ZOOM & NAVIGASI HALUS
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.08;
-    controls.rotateSpeed = 1.2;
+    controls.dampingFactor = 0.05;
+    controls.rotateSpeed = 1.0;
+    controls.zoomSpeed = 0.5; // DIKURANGI SENSITIVITASNYA (Default biasanya 1.0)
 
-    // --- NAVIGASI SUMBU & LABEL ---
+    // --- NAVIGASI SUMBU & LABEL BOLD ---
     const axesHelper = new THREE.AxesHelper(6); 
     scene.add(axesHelper);
 
-    // Label Sumbu XYZ
-    scene.add(makeTextSprite("X (East)", 6.5, 0, 0, "#ff4d4d"));
-    scene.add(makeTextSprite("Y (Up)", 0, 6, 0, "#4dff4d"));
-    scene.add(makeTextSprite("Z (South)", 0, 0, 6.5, "#4d4dff"));
+    // Label Sumbu XYZ (Lebih Besar & Jelas)
+    scene.add(makeTextSprite("X (East)", 6.8, 0, 0, "#ff4d4d", 55));
+    scene.add(makeTextSprite("Y (Zenith)", 0, 6.5, 0, "#4dff4d", 55));
+    scene.add(makeTextSprite("Z (South)", 0, 0, 6.8, "#4d4dff", 55));
 
-    // Label 8 Arah Mata Angin di permukaan lantai (r=5.5)
-    const rLabel = 5.5;
-    const dLabel = rLabel * 0.707; // sin(45 deg)
+    // Label 8 Arah Mata Angin
+    const rLabel = 5.8;
+    const dLabel = rLabel * 0.707;
     
-    scene.add(makeTextSprite("UTARA (N)", 0, 0.1, -rLabel, "#00f2fe"));
-    scene.add(makeTextSprite("SELATAN (S)", 0, 0.1, rLabel, "#00f2fe"));
-    scene.add(makeTextSprite("TIMUR (E)", rLabel, 0.1, 0, "#ffdd00"));
-    scene.add(makeTextSprite("BARAT (W)", -rLabel, 0.1, 0, "#ffffff"));
+    scene.add(makeTextSprite("UTARA (N)", 0, 0.2, -rLabel, "#00f2fe", 60));
+    scene.add(makeTextSprite("SELATAN (S)", 0, 0.2, rLabel, "#00f2fe", 60));
+    scene.add(makeTextSprite("TIMUR (E)", rLabel, 0.2, 0, "#ffdd00", 60));
+    scene.add(makeTextSprite("BARAT (W)", -rLabel, 0.2, 0, "#ffffff", 60));
     
-    // Diagonal
-    scene.add(makeTextSprite("TL", dLabel, 0.1, -dLabel, "#aaaaaa", 24));
-    scene.add(makeTextSprite("BL", -dLabel, 0.1, -dLabel, "#aaaaaa", 24));
-    scene.add(makeTextSprite("TG", dLabel, 0.1, dLabel, "#aaaaaa", 24));
-    scene.add(makeTextSprite("BD", -dLabel, 0.1, dLabel, "#aaaaaa", 24));
+    // Diagonal (Ukuran sedang)
+    scene.add(makeTextSprite("TL", dLabel, 0.2, -dLabel, "#cccccc", 45));
+    scene.add(makeTextSprite("BL", -dLabel, 0.2, -dLabel, "#cccccc", 45));
+    scene.add(makeTextSprite("TG", dLabel, 0.2, dLabel, "#cccccc", 45));
+    scene.add(makeTextSprite("BD", -dLabel, 0.2, dLabel, "#cccccc", 45));
 
     const gridHelper = new THREE.GridHelper(12, 12, 0x444444, 0x222222);
     scene.add(gridHelper);
 
     const ambientLight = new THREE.AmbientLight(0x404040, 2);
     scene.add(ambientLight);
-    const light = new THREE.PointLight(0xffffff, 1);
-    light.position.set(10, 10, 10);
-    scene.add(light);
-
+    
     const domeGeo = new THREE.SphereGeometry(5, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2);
     const domeMat = new THREE.MeshBasicMaterial({ color: 0x00f2fe, wireframe: true, transparent: true, opacity: 0.12 });
     dome = new THREE.Mesh(domeGeo, domeMat);
@@ -110,7 +117,7 @@ function init3D() {
     sun = new THREE.Mesh(sunGeo, sunMat);
     scene.add(sun);
 
-    camera.position.set(8, 8, 8);
+    camera.position.set(10, 10, 10);
     controls.update();
     animate();
 }
@@ -120,7 +127,7 @@ function animate() {
     const now = new Date();
     if(document.getElementById('localTime')) document.getElementById('localTime').innerText = now.toLocaleTimeString();
     if (isRealTimeMode) updateSunByTime(now);
-    controls.update(); // Navigasi dinamis
+    controls.update();
     renderer.render(scene, camera);
 }
 
