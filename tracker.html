@@ -6,7 +6,6 @@
     <title>3D Solar Tracker Visualization</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
@@ -43,16 +42,17 @@
             </div>
 
             <div class="instruction-card">
-                <h4>Navigasi 3D (Mouse & Trackpad):</h4>
+                <h4>Navigasi 3D:</h4>
                 <ul>
-                    <li> <b>1 Jari / Klik Kiri:</b> Putar Kamera 360°</li>
-                    <li> <b>2 Jari / Scroll:</b> Zoom In/Out</li>
-                    <li> <b>Klik Kanan / Shift + Geser:</b> Pindah Kamera</li>
-                    <li> <b>Double Klik:</b> Toggle Real-Time Matahari</li>
+                    <li> <b>Geser:</b> Rotasi 360°</li>
+                    <li> <b>Pinch/Scroll:</b> Zoom</li>
+                    <li> <b>Sumbu Hijau:</b> Atas (Y)</li>
+                    <li> <b>Sumbu Merah:</b> Timur (X)</li>
+                    <li> <b>Sumbu Biru:</b> Selatan (Z)</li>
                 </ul>
             </div>
             
-            <p class="hint">*Posisi visual akan otomatis sinkron saat ESP32 terhubung.</p>
+            <p class="hint">*Double klik area 3D untuk Real-Time.</p>
         </div>
 
         <div id="canvas-container">
