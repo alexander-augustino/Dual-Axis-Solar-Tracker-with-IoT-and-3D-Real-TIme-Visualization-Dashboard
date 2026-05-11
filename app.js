@@ -32,27 +32,57 @@ function initWebSocket() {
     };
 }
 
+// Fungsi bantu untuk membuat label arah mata angin yang selalu menghadap kamera
+function createLabel(text, x, z, color = "#ffffff") {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    canvas.width = 256;
+    canvas.height = 128;
+    context.fillStyle = color;
+    context.font = 'Bold 44px Poppins, Arial';
+    context.textAlign = 'center';
+    context.fillText(text, 128, 64);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    const material = new THREE.SpriteMaterial({ map: texture });
+    const sprite = new THREE.Sprite(material);
+    sprite.position.set(x, 0.2, z);
+    sprite.scale.set(1.5, 0.75, 1);
+    scene.add(sprite);
+}
+
 function init3D() {
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
     
-    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
     container.appendChild(renderer.domElement);
 
-    // --- NAVIGASI SUMBU (X, Y, Z) ---
-    // Merah = X (Timur), Hijau = Y (Atas), Biru = Z (Selatan)
-    const axesHelper = new THREE.AxesHelper(6); 
-    scene.add(axesHelper);
-
-    // Lantai Grid untuk referensi arah mata angin
-    const gridHelper = new THREE.GridHelper(10, 10, 0x444444, 0x222222);
-    scene.add(gridHelper);
-
+    // Tetap gunakan OrbitControls untuk navigasi bebas
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
     controls.rotateSpeed = 1.2;
+    controls.zoomSpeed = 1.5;
+
+    // --- NAVIGASI SUMBU & GRID ---
+    const axesHelper = new THREE.AxesHelper(6); 
+    scene.add(axesHelper);
+    const gridHelper = new THREE.GridHelper(12, 12, 0x444444, 0x222222);
+    scene.add(gridHelper);
+
+    // --- 8 ARAH MATA ANGIN ---
+    const dist = 5.5; 
+    createLabel("UTARA (N)", 0, -dist, "#00f2fe");
+    createLabel("SELATAN (S)", 0, dist, "#00f2fe");
+    createLabel("TIMUR (E)", dist, 0, "#ff4d4d");
+    createLabel("BARAT (W)", -dist, 0, "#ffffff");
+    const diag = dist * 0.707;
+    createLabel("TL", diag, -diag); 
+    createLabel("TG", diag, diag);  
+    createLabel("BD", -diag, diag); 
+    createLabel("BL", -diag, -diag);
 
     const ambientLight = new THREE.AmbientLight(0x404040, 2);
     scene.add(ambientLight);
@@ -61,7 +91,7 @@ function init3D() {
     scene.add(light);
 
     const domeGeo = new THREE.SphereGeometry(5, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2);
-    const domeMat = new THREE.MeshBasicMaterial({ color: 0x00f2fe, wireframe: true, transparent: true, opacity: 0.15 });
+    const domeMat = new THREE.MeshBasicMaterial({ color: 0x00f2fe, wireframe: true, transparent: true, opacity: 0.1 });
     dome = new THREE.Mesh(domeGeo, domeMat);
     scene.add(dome);
 
@@ -70,7 +100,7 @@ function init3D() {
     sun = new THREE.Mesh(sunGeo, sunMat);
     scene.add(sun);
 
-    camera.position.set(8, 6, 8);
+    camera.position.set(8, 8, 8);
     controls.update();
     animate();
 }
@@ -80,7 +110,7 @@ function animate() {
     const now = new Date();
     if(document.getElementById('localTime')) document.getElementById('localTime').innerText = now.toLocaleTimeString();
     if (isRealTimeMode) updateSunByTime(now);
-    controls.update();
+    controls.update(); // Update navigasi orbit setiap frame
     renderer.render(scene, camera);
 }
 
@@ -116,6 +146,9 @@ container.addEventListener('dblclick', () => {
     }
 });
 
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
 container.addEventListener('click', (event) => {
     if (isRealTimeMode) return;
     const rect = container.getBoundingClientRect();
@@ -134,8 +167,6 @@ container.addEventListener('click', (event) => {
     }
 });
 
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
 window.onload = () => { init3D(); initWebSocket(); };
 window.addEventListener('resize', () => {
     camera.aspect = container.clientWidth / container.clientHeight;
