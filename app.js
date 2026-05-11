@@ -1,9 +1,10 @@
 // --- Konfigurasi Dasar Three.js ---
-let scene, camera, renderer, sun, dome;
+let scene, camera, renderer, sun, dome, controls;
+let isRealTimeMode = false; // Status mode Real-Time (berdasarkan waktu)
 const container = document.getElementById('canvas-container');
 
 // --- Konfigurasi WebSocket ---
-// Ganti dengan IP Address ESP32 yang muncul di Serial Monitor
+// Ganti dengan IP Address ESP32 yang muncul di Serial Monitor saat alat sudah ada
 const gateway = `ws://192.168.XX.XX/ws`; 
 let socket;
 
@@ -13,14 +14,18 @@ function initWebSocket() {
 
     socket.onopen = () => {
         console.log('Terhubung ke ESP32');
-        document.getElementById('valStatus').innerText = "Online";
-        document.getElementById('valStatus').className = "status-online";
+        if(document.getElementById('valStatus')) {
+            document.getElementById('valStatus').innerText = "Online";
+            document.getElementById('valStatus').className = "status-online";
+        }
     };
 
     socket.onclose = () => {
         console.log('Koneksi terputus, mencoba menyambung kembali...');
-        document.getElementById('valStatus').innerText = "Offline";
-        document.getElementById('valStatus').className = "status-offline";
+        if(document.getElementById('valStatus')) {
+            document.getElementById('valStatus').innerText = "Offline";
+            document.getElementById('valStatus').className = "status-offline";
+        }
         setTimeout(initWebSocket, 2000); // Reconnect otomatis setiap 2 detik
     };
 
@@ -28,17 +33,17 @@ function initWebSocket() {
         const data = JSON.parse(event.data);
         
         if (data.type === "telemetry") {
-            // 1. Update Tampilan Angka di Dashboard
+            // Update Tampilan Angka di Dashboard
             document.getElementById('valAzimuth').innerText = data.az.toFixed(2);
             document.getElementById('valElevation').innerText = data.el.toFixed(2);
             
-            // Cek jika elemen lux dan volt ada di halaman (untuk dashboard.html)
             if(document.getElementById('valLux')) document.getElementById('valLux').innerText = data.lux.toFixed(0);
             if(document.getElementById('valVolt')) document.getElementById('valVolt').innerText = data.volt.toFixed(2);
 
-            // 2. Update Posisi Matahari 3D Berdasarkan Feedback Alat (Jika tidak sedang manual)
-            // Ini memastikan visualisasi sesuai dengan posisi asli servo
-            updateSunPosition(data.az, data.el);
+            // Update posisi visual 3D sesuai data asli dari alat
+            if (!isRealTimeMode) {
+                updateSunVisual(data.az, data.el);
+            }
         }
     };
 }
@@ -50,6 +55,12 @@ function init3D() {
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
     container.appendChild(renderer.domElement);
+
+    // --- FITUR: OrbitControls (Putar 360 Derajat) ---
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.rotateSpeed = 0.8;
 
     // Pencahayaan
     const ambientLight = new THREE.AmbientLight(0x404040, 2);
@@ -75,21 +86,33 @@ function init3D() {
     sun = new THREE.Mesh(sunGeo, sunMat);
     scene.add(sun);
 
-    // Posisi Kamera
     camera.position.set(8, 6, 8);
-    camera.lookAt(0, 0, 0);
+    controls.update();
 
     animate();
 }
 
 function animate() {
     requestAnimationFrame(animate);
+    
+    // Update Jam Real-Time di UI
+    const now = new Date();
+    if(document.getElementById('localTime')) {
+        document.getElementById('localTime').innerText = now.toLocaleTimeString();
+    }
+
+    // Jika mode Real-Time Aktif, geser matahari berdasarkan waktu
+    if (isRealTimeMode) {
+        updateSunByTime(now);
+    }
+
+    controls.update();
     renderer.render(scene, camera);
 }
 
-// Fungsi untuk menggerakkan bola matahari di 3D berdasarkan sudut
-function updateSunPosition(az, el) {
-    const r = 5; // radius dome
+// Menggerakkan visual matahari berdasarkan sudut Azimuth & Elevation
+function updateSunVisual(az, el) {
+    const r = 5;
     const phi = (90 - el) * (Math.PI / 180);
     const theta = (az + 180) * (Math.PI / 180);
 
@@ -98,11 +121,44 @@ function updateSunPosition(az, el) {
     sun.position.z = r * Math.sin(phi) * Math.cos(theta);
 }
 
-// --- LOGIKA RAYCASTING (Klik Interaktif) ---
+// Logika Astronomi Sederhana Berdasarkan Jam
+function updateSunByTime(date) {
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const totalMinutes = (hours * 60) + minutes;
+
+    // Range: 06:00 (360 mnt) sampai 18:00 (1080 mnt)
+    let dayProgress = (totalMinutes - 360) / 720; 
+
+    if (dayProgress >= 0 && dayProgress <= 1) {
+        let el = Math.sin(dayProgress * Math.PI) * 90;
+        let az = 90 + (dayProgress * 180);
+        updateSunVisual(az, el);
+        document.getElementById('valAzimuth').innerText = az.toFixed(2);
+        document.getElementById('valElevation').innerText = el.toFixed(2);
+    } else {
+        updateSunVisual(0, -10); // Sembunyi saat malam
+    }
+}
+
+// --- INTERAKSI KLIK & TOGGLE ---
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
+// Klik dua kali untuk ganti mode (Real-Time vs Manual)
+container.addEventListener('dblclick', () => {
+    isRealTimeMode = !isRealTimeMode;
+    const display = document.getElementById('modeDisplay');
+    if(display) {
+        display.innerText = isRealTimeMode ? "REAL-TIME (CLOCK BASED)" : "MANUAL / INTERACTIVE";
+        display.style.color = isRealTimeMode ? "#ffdd00" : "#00f2fe";
+    }
+});
+
+// Klik satu kali untuk gerakkan manual (hanya jika mode manual)
 container.addEventListener('click', (event) => {
+    if (isRealTimeMode) return;
+
     const rect = container.getBoundingClientRect();
     mouse.x = ((event.clientX - rect.left) / container.clientWidth) * 2 - 1;
     mouse.y = -((event.clientY - rect.top) / container.clientHeight) * 2 + 1;
@@ -112,39 +168,30 @@ container.addEventListener('click', (event) => {
 
     if (intersects.length > 0) {
         const point = intersects[0].point;
-        
-        // Konversi koordinat titik klik ke sudut Azimuth & Elevation
         const r = 5;
         let elevation = Math.asin(point.y / r) * (180 / Math.PI);
         let azimuth = Math.atan2(point.x, point.z) * (180 / Math.PI);
-
-        // Batasi nilai azimuth agar sesuai rentang servo (misal 0-180)
         if (azimuth < 0) azimuth += 180; 
 
-        // 1. Update UI secara instan
         document.getElementById('valAzimuth').innerText = azimuth.toFixed(2);
         document.getElementById('valElevation').innerText = elevation.toFixed(2);
         sun.position.copy(point);
 
-        // 2. Kirim ke ESP32 melalui WebSocket
+        // Kirim perintah manual ke ESP32
         if (socket && socket.readyState === WebSocket.OPEN) {
-            const msg = JSON.stringify({
+            socket.send(JSON.stringify({
                 az: parseFloat(azimuth.toFixed(2)),
                 el: parseFloat(elevation.toFixed(2))
-            });
-            socket.send(msg);
-            console.log("Sent to ESP32:", msg);
+            }));
         }
     }
 });
 
-// Jalankan fungsi saat halaman dimuat
 window.onload = () => {
     init3D();
     initWebSocket();
 };
 
-// Handle window resize agar canvas tetap proporsional
 window.addEventListener('resize', () => {
     camera.aspect = container.clientWidth / container.clientHeight;
     camera.updateProjectionMatrix();
