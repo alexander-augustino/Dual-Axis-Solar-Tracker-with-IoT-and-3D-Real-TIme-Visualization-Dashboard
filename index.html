@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Tracker IoT - Home</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav>
+        <div class="logo">SolarTracker<span>IoT</span></div>
+        <ul>
+            <li><a href="index.html" class="active">Opening</a></li>
+            <li><a href="tracker.html">3D Tracker</a></li>
+            <li><a href="dashboard.html">Data Analysis</a></li>
+        </ul>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Dual-Axis Solar Tracker</h1>
+            <p>Sistem cerdas berbasis IoT dengan Visualisasi Digital Twin 3D Real-Time untuk optimalisasi penyerapan energi matahari.</p>
+            <div class="btn-group">
+                <a href="tracker.html" class="btn-primary">Mulai Monitoring</a>
+                <a href="#about" class="btn-secondary">Pelajari Proyek</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="about" class="info-section">
+        <h2>Tentang Proyek</h2>
+        <div class="grid-info">
+            <div class="card">
+                <h3>Dual-Axis Precision</h3>
+                <p>Menggunakan dua motor servo untuk mengikuti pergerakan matahari secara horizontal (Azimuth) dan vertikal (Elevation).</p>
+            </div>
+            <div class="card">
+                <h3>IoT Integration</h3>
+                <p>ESP32 sebagai otak sistem mengirim data sensor melalui protokol WebSockets untuk latensi rendah.</p>
+            </div>
+            <div class="card">
+                <h3>Real-Time 3D</h3>
+                <p>Visualisasi dome parametrik menggunakan Three.js untuk merepresentasikan posisi matahari secara akurat.</p>
+            </div>
+        </div>
+    </section>
+</body>
+</html>

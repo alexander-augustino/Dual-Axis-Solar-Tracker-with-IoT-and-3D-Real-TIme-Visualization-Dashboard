@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Data Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <nav>
+        <div class="logo">SolarTracker<span>IoT</span></div>
+        <ul>
+            <li><a href="index.html">Opening</a></li>
+            <li><a href="tracker.html">3D Tracker</a></li>
+            <li><a href="dashboard.html" class="active">Data Analysis</a></li>
+        </ul>
+    </nav>
+
+    <section class="dashboard-grid">
+        <div class="chart-card">
+            <h3>Luminasitas Cahaya (Lux)</h3>
+            <canvas id="luxChart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3>Tegangan Output Panel (Volt)</h3>
+            <canvas id="voltChart"></canvas>
+        </div>
+    </section>
+
+    <section class="table-section">
+        <h3>Log Data Terkini</h3>
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>Waktu</th>
+                    <th>Lux</th>
+                    <th>Voltage (V)</th>
+                    <th>Current (A)</th>
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
+    </section>
+
+    <script>
+        // Inisialisasi Chart sederhana untuk demo
+        const ctxLux = document.getElementById('luxChart').getContext('2d');
+        new Chart(ctxLux, {
+            type: 'line',
+            data: {
+                labels: ['12:00', '12:05', '12:10', '12:15', '12:20'],
+                datasets: [{
+                    label: 'Lux',
+                    data: [45000, 52000, 61000, 58000, 65000],
+                    borderColor: '#00f2fe',
+                    tension: 0.4
+                }]
+            },
+            options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        });
+
+        const ctxVolt = document.getElementById('voltChart').getContext('2d');
+        new Chart(ctxVolt, {
+            type: 'line',
+            data: {
+                labels: ['12:00', '12:05', '12:10', '12:15', '12:20'],
+                datasets: [{
+                    label: 'Voltage',
+                    data: [12.4, 13.1, 14.2, 13.8, 14.5],
+                    borderColor: '#4facfe',
+                    tension: 0.4
+                }]
+            },
+            options: { responsive: true }
+        });
+    </script>
+</body>
+</html>

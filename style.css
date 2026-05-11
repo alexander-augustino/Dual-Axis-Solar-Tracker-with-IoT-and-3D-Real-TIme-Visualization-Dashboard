@@ -1,0 +1,115 @@
+:root {
+    --bg-dark: #0a0a0c;
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --accent: #00f2fe;
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    overflow-x: hidden;
+}
+
+/* Navbar */
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 8%;
+    background: rgba(10, 10, 12, 0.8);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.logo { font-size: 1.5rem; font-weight: 600; }
+.logo span { color: var(--accent); }
+
+nav ul { display: flex; list-style: none; }
+nav ul li a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    margin-left: 30px;
+    transition: 0.3s;
+}
+
+nav ul li a:hover, nav ul li a.active { color: var(--accent); }
+
+/* Hero Section */
+.hero {
+    height: 80vh;
+    display: flex;
+    align-items: center;
+    padding: 0 8%;
+}
+
+.hero-content h1 { font-size: 3.5rem; line-height: 1.2; margin-bottom: 20px; }
+.hero-content p { font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-bottom: 30px; }
+
+.btn-primary {
+    padding: 12px 30px;
+    background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: 600;
+}
+
+/* Tracker Page Layout */
+.tracker-container {
+    display: flex;
+    height: calc(100vh - 80px);
+    padding: 20px;
+}
+
+.control-panel {
+    width: 300px;
+    background: var(--card-bg);
+    padding: 25px;
+    border-radius: 15px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+#canvas-container {
+    flex-grow: 1;
+    margin-left: 20px;
+    background: #000;
+    border-radius: 15px;
+    position: relative;
+}
+
+/* Dashboard Page */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 40px 8%;
+}
+
+.chart-card {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 15px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}

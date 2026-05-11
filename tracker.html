@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Solar Tracker Visualization</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <nav>
+        <div class="logo">SolarTracker<span>IoT</span></div>
+        <ul>
+            <li><a href="index.html">Opening</a></li>
+            <li><a href="tracker.html" class="active">3D Tracker</a></li>
+            <li><a href="dashboard.html">Data Analysis</a></li>
+        </ul>
+    </nav>
+
+    <main class="tracker-container">
+        <div class="control-panel">
+            <h3>Control Mode</h3>
+            <div class="mode-switch">
+                <button id="btnAuto" class="active">AUTO</button>
+                <button id="btnManual">MANUAL</button>
+            </div>
+            <div class="status-box">
+                <p>Azimuth: <span id="valAzimuth">0.00</span>°</p>
+                <p>Elevation: <span id="valElevation">0.00</span>°</p>
+                <p>Status: <span id="valStatus" class="status-online">Connected</span></p>
+            </div>
+            <p class="hint">* Klik pada kubah untuk menggerakkan servo (Mode Manual)</p>
+        </div>
+
+        <div id="canvas-container">
+            </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
