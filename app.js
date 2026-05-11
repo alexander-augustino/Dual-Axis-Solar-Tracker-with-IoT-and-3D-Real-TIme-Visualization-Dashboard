@@ -1,10 +1,9 @@
 // --- Konfigurasi Dasar Three.js ---
 let scene, camera, renderer, sun, dome, controls;
-let isRealTimeMode = false; // Status mode Real-Time (berdasarkan waktu)
+let isRealTimeMode = false; 
 const container = document.getElementById('canvas-container');
 
 // --- Konfigurasi WebSocket ---
-// Ganti dengan IP Address ESP32 yang muncul di Serial Monitor saat alat sudah ada
 const gateway = `ws://192.168.XX.XX/ws`; 
 let socket;
 
@@ -26,21 +25,18 @@ function initWebSocket() {
             document.getElementById('valStatus').innerText = "Offline";
             document.getElementById('valStatus').className = "status-offline";
         }
-        setTimeout(initWebSocket, 2000); // Reconnect otomatis setiap 2 detik
+        setTimeout(initWebSocket, 2000);
     };
 
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        
         if (data.type === "telemetry") {
-            // Update Tampilan Angka di Dashboard
             document.getElementById('valAzimuth').innerText = data.az.toFixed(2);
             document.getElementById('valElevation').innerText = data.el.toFixed(2);
             
             if(document.getElementById('valLux')) document.getElementById('valLux').innerText = data.lux.toFixed(0);
             if(document.getElementById('valVolt')) document.getElementById('valVolt').innerText = data.volt.toFixed(2);
 
-            // Update posisi visual 3D sesuai data asli dari alat
             if (!isRealTimeMode) {
                 updateSunVisual(data.az, data.el);
             }
@@ -56,11 +52,13 @@ function init3D() {
     renderer.setSize(container.clientWidth, container.clientHeight);
     container.appendChild(renderer.domElement);
 
-    // --- FITUR: OrbitControls (Putar 360 Derajat) ---
+    // --- FITUR: OrbitControls (Optimasi Trackpad) ---
     controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.rotateSpeed = 0.8;
+    controls.enableDamping = true;       // Efek halus saat berhenti geser
+    controls.dampingFactor = 0.08;       // Kelenturan gerakan
+    controls.rotateSpeed = 1.2;          // Lebih responsif untuk area sentuh kecil
+    controls.zoomSpeed = 1.5;            // Zoom lebih cepat untuk dua jari
+    controls.screenSpacePanning = true;  // Memudahkan geser kamera
 
     // Pencahayaan
     const ambientLight = new THREE.AmbientLight(0x404040, 2);
@@ -69,7 +67,7 @@ function init3D() {
     light.position.set(10, 10, 10);
     scene.add(light);
 
-    // Membuat Dome (Setengah Bola Transparan)
+    // Membuat Dome
     const domeGeo = new THREE.SphereGeometry(5, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2);
     const domeMat = new THREE.MeshBasicMaterial({ 
         color: 0x00f2fe, 
@@ -80,7 +78,7 @@ function init3D() {
     dome = new THREE.Mesh(domeGeo, domeMat);
     scene.add(dome);
 
-    // Membuat Matahari (Bola Kecil Kuning)
+    // Membuat Matahari
     const sunGeo = new THREE.SphereGeometry(0.4, 16, 16);
     const sunMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
     sun = new THREE.Mesh(sunGeo, sunMat);
@@ -95,22 +93,19 @@ function init3D() {
 function animate() {
     requestAnimationFrame(animate);
     
-    // Update Jam Real-Time di UI
     const now = new Date();
     if(document.getElementById('localTime')) {
         document.getElementById('localTime').innerText = now.toLocaleTimeString();
     }
 
-    // Jika mode Real-Time Aktif, geser matahari berdasarkan waktu
     if (isRealTimeMode) {
         updateSunByTime(now);
     }
 
-    controls.update();
+    controls.update(); // Dibutuhkan oleh enableDamping
     renderer.render(scene, camera);
 }
 
-// Menggerakkan visual matahari berdasarkan sudut Azimuth & Elevation
 function updateSunVisual(az, el) {
     const r = 5;
     const phi = (90 - el) * (Math.PI / 180);
@@ -121,13 +116,10 @@ function updateSunVisual(az, el) {
     sun.position.z = r * Math.sin(phi) * Math.cos(theta);
 }
 
-// Logika Astronomi Sederhana Berdasarkan Jam
 function updateSunByTime(date) {
     const hours = date.getHours();
     const minutes = date.getMinutes();
     const totalMinutes = (hours * 60) + minutes;
-
-    // Range: 06:00 (360 mnt) sampai 18:00 (1080 mnt)
     let dayProgress = (totalMinutes - 360) / 720; 
 
     if (dayProgress >= 0 && dayProgress <= 1) {
@@ -137,7 +129,7 @@ function updateSunByTime(date) {
         document.getElementById('valAzimuth').innerText = az.toFixed(2);
         document.getElementById('valElevation').innerText = el.toFixed(2);
     } else {
-        updateSunVisual(0, -10); // Sembunyi saat malam
+        updateSunVisual(0, -10); 
     }
 }
 
@@ -145,7 +137,6 @@ function updateSunByTime(date) {
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-// Klik dua kali untuk ganti mode (Real-Time vs Manual)
 container.addEventListener('dblclick', () => {
     isRealTimeMode = !isRealTimeMode;
     const display = document.getElementById('modeDisplay');
@@ -155,7 +146,6 @@ container.addEventListener('dblclick', () => {
     }
 });
 
-// Klik satu kali untuk gerakkan manual (hanya jika mode manual)
 container.addEventListener('click', (event) => {
     if (isRealTimeMode) return;
 
@@ -177,7 +167,6 @@ container.addEventListener('click', (event) => {
         document.getElementById('valElevation').innerText = elevation.toFixed(2);
         sun.position.copy(point);
 
-        // Kirim perintah manual ke ESP32
         if (socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({
                 az: parseFloat(azimuth.toFixed(2)),
