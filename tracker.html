@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Solar Tracker Visualization</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
     <nav>
@@ -19,21 +22,44 @@
 
     <main class="tracker-container">
         <div class="control-panel">
-            <h3>Control Mode</h3>
-            <div class="mode-switch">
-                <button id="btnAuto" class="active">AUTO</button>
-                <button id="btnManual">MANUAL</button>
-            </div>
+            <h3>Monitoring Panel</h3>
+            
             <div class="status-box">
-                <p>Azimuth: <span id="valAzimuth">0.00</span>°</p>
-                <p>Elevation: <span id="valElevation">0.00</span>°</p>
-                <p>Status: <span id="valStatus" class="status-online">Connected</span></p>
+                <div class="data-item">
+                    <p>Azimuth</p>
+                    <h2><span id="valAzimuth">0.00</span>°</h2>
+                </div>
+                <div class="data-item">
+                    <p>Elevation</p>
+                    <h2><span id="valElevation">0.00</span>°</h2>
+                </div>
+                <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 15px 0;">
+                <p>System Status: <span id="valStatus" class="status-online">Connected</span></p>
             </div>
-            <p class="hint">* Klik pada kubah untuk menggerakkan servo (Mode Manual)</p>
+
+            <div class="mode-info">
+                <p><strong>Mode Saat Ini:</strong></p>
+                <div id="modeDisplay" style="color: var(--accent); font-weight: 600; margin-top: 5px;">MANUAL / INTERACTIVE</div>
+            </div>
+
+            <div class="instruction-card">
+                <h4>Navigasi 3D:</h4>
+                <ul>
+                    <li>🖱️ <b>Klik Kiri:</b> Putar Kamera 360°</li>
+                    <li>🖱️ <b>Klik Kanan:</b> Geser Kamera</li>
+                    <li>🖱️ <b>Scroll:</b> Zoom In/Out</li>
+                    <li>🖱️ <b>Double Klik:</b> Toggle Real-Time Matahari</li>
+                </ul>
+            </div>
+            
+            <p class="hint">*Posisi visual akan otomatis sinkron saat ESP32 terhubung.</p>
         </div>
 
         <div id="canvas-container">
+            <div id="time-overlay" style="position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px; pointer-events: none;">
+                Local Time: <span id="localTime">00:00:00</span>
             </div>
+        </div>
     </main>
 
     <script src="app.js"></script>
