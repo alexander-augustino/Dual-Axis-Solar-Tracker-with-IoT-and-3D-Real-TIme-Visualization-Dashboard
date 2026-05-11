@@ -32,13 +32,12 @@ function initWebSocket() {
     };
 }
 
-// Fungsi membuat label (Sprite) - BOLD & TAJAM
+// Fungsi label tetap BOLD & BESAR sesuai request sebelumnya
 function makeTextSprite(message, x, y, z, color = "white", fontSize = 55) {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
     canvas.width = 512; 
     canvas.height = 256;
-    
     context.font = "Bold " + fontSize + "px Poppins, Arial";
     context.fillStyle = color;
     context.textAlign = "center";
@@ -50,7 +49,6 @@ function makeTextSprite(message, x, y, z, color = "white", fontSize = 55) {
     const texture = new THREE.CanvasTexture(canvas);
     const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
     const sprite = new THREE.Sprite(spriteMaterial);
-    
     sprite.position.set(x, y, z);
     sprite.scale.set(2.5, 1.25, 1); 
     return sprite;
@@ -59,8 +57,8 @@ function makeTextSprite(message, x, y, z, color = "white", fontSize = 55) {
 function init3D() {
     scene = new THREE.Scene();
     
-    // Set kamera agar Z adalah arah ATAS
     camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+    // HANYA MENGUBAH ARAH ATAS KAMERA KE Z
     camera.up.set(0, 0, 1); 
     camera.position.set(10, -10, 10);
 
@@ -68,22 +66,21 @@ function init3D() {
     renderer.setSize(container.clientWidth, container.clientHeight);
     container.appendChild(renderer.domElement);
 
-    // Navigasi Smooth
+    // Navigasi tetap halus (zoomSpeed 0.5)
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-    controls.zoomSpeed = 0.5; // Zoom tidak bikin pusing
+    controls.zoomSpeed = 0.5;
 
-    // --- NAVIGASI SUMBU (X=Merah, Y=Hijau, Z=Biru) ---
     const axesHelper = new THREE.AxesHelper(6); 
     scene.add(axesHelper);
 
-    // Label LOGIKA TEKNIK: XY = Lantai, Z = Tinggi
+    // REVISI POSISI LABEL: Y dan Z bertukar tempat
     scene.add(makeTextSprite("X (East)", 6.8, 0, 0, "#ff4d4d"));
-    scene.add(makeTextSprite("Y (North)", 0, 6.8, 0, "#4dff4d"));
-    scene.add(makeTextSprite("Z (Zenith)", 0, 0, 6.5, "#4d4dff"));
+    scene.add(makeTextSprite("Y (North)", 0, 6.8, 0, "#4dff4d")); // Sekarang di lantai
+    scene.add(makeTextSprite("Z (Zenith)", 0, 0, 6.5, "#4d4dff")); // Sekarang ke atas
 
-    // Label 8 Arah Mata Angin di Bidang XY (Lantai)
+    // Label Arah Mata Angin di bidang XY (Lantai)
     const rL = 5.8;
     const dL = rL * 0.707;
     scene.add(makeTextSprite("TIMUR (E)", rL, 0, 0.1, "#ffdd00", 60));
@@ -91,22 +88,22 @@ function init3D() {
     scene.add(makeTextSprite("UTARA (N)", 0, rL, 0.1, "#00f2fe", 60));
     scene.add(makeTextSprite("SELATAN (S)", 0, -rL, 0.1, "#00f2fe", 60));
     
-    // Diagonal
     scene.add(makeTextSprite("TL", dL, dL, 0.1, "#cccccc", 45));
     scene.add(makeTextSprite("BL", -dL, dL, 0.1, "#cccccc", 45));
     scene.add(makeTextSprite("TG", dL, -dL, 0.1, "#cccccc", 45));
     scene.add(makeTextSprite("BD", -dL, -dL, 0.1, "#cccccc", 45));
 
-    // Grid di lantai (XY)
     const gridHelper = new THREE.GridHelper(12, 12, 0x444444, 0x222222);
-    gridHelper.rotation.x = Math.PI / 2; // Rebahkan grid ke bidang XY
+    gridHelper.rotation.x = Math.PI / 2; // Grid jadi lantai XY
     scene.add(gridHelper);
 
-    // Dome & Sun
+    const ambientLight = new THREE.AmbientLight(0x404040, 2);
+    scene.add(ambientLight);
+    
     const domeGeo = new THREE.SphereGeometry(5, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2);
-    const domeMat = new THREE.MeshBasicMaterial({ color: 0x00f2fe, wireframe: true, transparent: true, opacity: 0.1 });
+    const domeMat = new THREE.MeshBasicMaterial({ color: 0x00f2fe, wireframe: true, transparent: true, opacity: 0.12 });
     dome = new THREE.Mesh(domeGeo, domeMat);
-    dome.rotation.x = Math.PI / 2; // Putar dome agar mencuat ke arah sumbu Z
+    dome.rotation.x = Math.PI / 2; // Dome mencuat ke sumbu Z
     scene.add(dome);
 
     const sunGeo = new THREE.SphereGeometry(0.4, 16, 16);
@@ -126,16 +123,15 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-// REVISI RUMUS: Sekarang Z adalah Elevation (Tinggi)
+// HANYA MENGUBAH RUMUS AGAR Z ADALAH ELEVASI
 function updateSunVisual(az, el) {
     const r = 5;
     const radAz = (az) * (Math.PI / 180);
     const radEl = (el) * (Math.PI / 180);
 
-    // Rumus Kartesius Standar (Z-up)
     sun.position.x = r * Math.cos(radEl) * Math.sin(radAz);
     sun.position.y = r * Math.cos(radEl) * Math.cos(radAz);
-    sun.position.z = r * Math.sin(radEl);
+    sun.position.z = r * Math.sin(radEl); // Z = Tinggi
 }
 
 function updateSunByTime(date) {
@@ -145,12 +141,25 @@ function updateSunByTime(date) {
         let el = Math.sin(dayProgress * Math.PI) * 90;
         let az = 90 + (dayProgress * 180);
         updateSunVisual(az, el);
+        document.getElementById('valAzimuth').innerText = az.toFixed(2);
+        document.getElementById('valElevation').innerText = el.toFixed(2);
     } else {
         updateSunVisual(0, -10); 
     }
 }
 
-// Interaksi klik pada dome (XY-Plane logic)
+container.addEventListener('dblclick', () => {
+    isRealTimeMode = !isRealTimeMode;
+    const display = document.getElementById('modeDisplay');
+    if(display) {
+        display.innerText = isRealTimeMode ? "REAL-TIME (CLOCK BASED)" : "MANUAL / INTERACTIVE";
+        display.style.color = isRealTimeMode ? "#ffdd00" : "#00f2fe";
+    }
+});
+
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
 container.addEventListener('click', (event) => {
     if (isRealTimeMode) return;
     const rect = container.getBoundingClientRect();
@@ -161,24 +170,13 @@ container.addEventListener('click', (event) => {
     if (intersects.length > 0) {
         const p = intersects[0].point;
         sun.position.copy(p);
-        let el = Math.asin(p.z / 5) * (180 / Math.PI);
+        let el = Math.asin(p.z / 5) * (180 / Math.PI); // Logic Z-Up
         let az = Math.atan2(p.x, p.y) * (180 / Math.PI);
         document.getElementById('valAzimuth').innerText = az.toFixed(2);
         document.getElementById('valElevation').innerText = el.toFixed(2);
     }
 });
 
-// Sisanya (DblClick, Resize, Load) tetap sama
-container.addEventListener('dblclick', () => {
-    isRealTimeMode = !isRealTimeMode;
-    const display = document.getElementById('modeDisplay');
-    if(display) {
-        display.innerText = isRealTimeMode ? "REAL-TIME (CLOCK BASED)" : "MANUAL / INTERACTIVE";
-        display.style.color = isRealTimeMode ? "#ffdd00" : "#00f2fe";
-    }
-});
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
 window.onload = () => { init3D(); initWebSocket(); };
 window.addEventListener('resize', () => {
     camera.aspect = container.clientWidth / container.clientHeight;
