@@ -17,9 +17,12 @@ body {
     background-color: var(--bg-dark);
     color: var(--text-primary);
     overflow-x: hidden;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
-/* Navbar */
+/* --- Navbar --- */
 nav {
     display: flex;
     justify-content: space-between;
@@ -45,27 +48,102 @@ nav ul li a {
 
 nav ul li a:hover, nav ul li a.active { color: var(--accent); }
 
-/* Hero Section */
+/* --- Hero Section (DI TENGAH - SEPERTI PORTOFOLIO) --- */
 .hero {
-    height: 80vh;
+    flex: 1; /* Mengambil sisa ruang layar */
     display: flex;
+    justify-content: center;
     align-items: center;
     padding: 0 8%;
+    text-align: center; /* Membuat teks ke tengah */
 }
 
-.hero-content h1 { font-size: 3.5rem; line-height: 1.2; margin-bottom: 20px; }
-.hero-content p { font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-bottom: 30px; }
+.hero-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centering elemen di dalam hero content */
+    max-width: 850px;
+    animation: fadeIn 1.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.hero-content h1 { 
+    font-size: 3.5rem; 
+    line-height: 1.2; 
+    margin-bottom: 20px; 
+    background: linear-gradient(to right, #fff, var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero-content p { 
+    font-size: 1.1rem; 
+    color: var(--text-secondary); 
+    max-width: 600px; 
+    margin-bottom: 40px; 
+}
+
+.btn-group {
+    display: flex;
+    gap: 15px;
+}
 
 .btn-primary {
-    padding: 12px 30px;
+    padding: 12px 35px;
     background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
-    color: white;
+    color: #0a0a0c; /* Lebih kontras */
     text-decoration: none;
-    border-radius: 5px;
+    border-radius: 8px;
     font-weight: 600;
+    transition: 0.3s;
 }
 
-/* Tracker Page Layout */
+.btn-secondary {
+    padding: 12px 35px;
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.btn-primary:hover, .btn-secondary:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 242, 254, 0.2);
+}
+
+/* --- About/Info Section --- */
+.info-section {
+    padding: 80px 8%;
+    text-align: center;
+}
+
+.grid-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+    margin-top: 40px;
+}
+
+.card {
+    background: var(--card-bg);
+    padding: 30px;
+    border-radius: 15px;
+    border: 1px solid rgba(255,255,255,0.05);
+    transition: 0.3s;
+}
+
+.card:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: var(--accent);
+}
+
+/* --- Tracker Page Layout --- */
 .tracker-container {
     display: flex;
     height: calc(100vh - 80px);
@@ -73,11 +151,14 @@ nav ul li a:hover, nav ul li a.active { color: var(--accent); }
 }
 
 .control-panel {
-    width: 300px;
+    width: 320px;
     background: var(--card-bg);
     padding: 25px;
     border-radius: 15px;
     border: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 #canvas-container {
@@ -86,9 +167,10 @@ nav ul li a:hover, nav ul li a.active { color: var(--accent); }
     background: #000;
     border-radius: 15px;
     position: relative;
+    overflow: hidden;
 }
 
-/* Dashboard Page */
+/* --- Dashboard Page --- */
 .dashboard-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -100,8 +182,14 @@ nav ul li a:hover, nav ul li a.active { color: var(--accent); }
     background: var(--card-bg);
     padding: 20px;
     border-radius: 15px;
+    border: 1px solid rgba(255,255,255,0.05);
 }
 
+/* --- Status Indicator --- */
+.status-online { color: #00ff88; font-weight: bold; }
+.status-offline { color: #ff4b2b; font-weight: bold; }
+
+/* --- Table Styles --- */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -113,3 +201,5 @@ th, td {
     text-align: left;
     border-bottom: 1px solid rgba(255,255,255,0.1);
 }
+
+th { color: var(--accent); }
