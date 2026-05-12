@@ -29,24 +29,43 @@
         </div>
     </section>
 
-    <section class="table-section">
-        <h3>Log Data Terkini</h3>
-        <table id="dataTable">
-            <thead>
-                <tr>
-                    <th>Waktu</th>
-                    <th>Lux</th>
-                    <th>Voltage (V)</th>
-                    <th>Current (A)</th>
-                </tr>
-            </thead>
-            <tbody>
-                </tbody>
-        </table>
+    <section class="dashboard-grid" style="grid-template-columns: 1fr 1fr; margin-top: 20px;">
+        <div class="table-section chart-card">
+            <h3 style="color: var(--accent);">Log Data Otomatis (Real-Time)</h3>
+            <div style="max-height: 400px; overflow-y: auto;">
+                <table id="autoTable">
+                    <thead>
+                        <tr>
+                            <th>Waktu</th>
+                            <th>Lux</th>
+                            <th>Volt</th>
+                            <th>Posisi (Az/El)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="autoLogBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="table-section chart-card">
+            <h3 style="color: #ffdd00;">Log Perintah Manual (Interactive)</h3>
+            <div style="max-height: 400px; overflow-y: auto;">
+                <table id="manualTable">
+                    <thead>
+                        <tr>
+                            <th>Waktu</th>
+                            <th>Target Az/El</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="manualLogBody"></tbody>
+                </table>
+            </div>
+        </div>
     </section>
 
     <script>
-        // Inisialisasi Chart sederhana untuk demo
+        // Chart Tetap Sama
         const ctxLux = document.getElementById('luxChart').getContext('2d');
         new Chart(ctxLux, {
             type: 'line',
