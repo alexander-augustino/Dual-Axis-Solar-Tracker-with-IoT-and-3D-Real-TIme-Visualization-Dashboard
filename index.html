@@ -3,45 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solar Tracker IoT - Home</title>
+    <title>SolarTracker IoT - Dashboard</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
     <nav>
-        <div class="logo">Solar Tracker<span> IoT</span></div>
+        <div class="logo">SolarTracker<span>IoT</span></div>
         <ul>
             <li><a href="index.html" class="active">Opening</a></li>
+            <li><a href="about.html">About</a></li>
             <li><a href="tracker.html">3D Tracker</a></li>
             <li><a href="dashboard.html">Data Analysis</a></li>
         </ul>
     </nav>
 
-    <section class="hero">
+    <header class="hero">
         <div class="hero-content">
             <h1>Dual-Axis Solar Tracker</h1>
             <p>Sistem cerdas berbasis IoT dengan Visualisasi Digital Twin 3D Real-Time untuk optimalisasi penyerapan energi matahari.</p>
-            <div class="btn-group">
+            <div class="cta-buttons">
                 <a href="tracker.html" class="btn-primary">Mulai Monitoring</a>
-                <a href="#about" class="btn-secondary">Pelajari Proyek</a>
+                <a href="about.html" class="btn-secondary">Pelajari Proyek</a>
             </div>
         </div>
-    </section>
+    </header>
 
-    <section id="about" class="info-section">
-        <h2>Tentang Proyek</h2>
-        <div class="grid-info">
-            <div class="card">
-                <h3>Dual-Axis Precision</h3>
-                <p>Menggunakan dua motor servo untuk mengikuti pergerakan matahari secara horizontal (Azimuth) dan vertikal (Elevation).</p>
+    <section class="team-section">
+        <h2 style="text-align: center; margin-bottom: 40px;">Tim Pengembang</h2>
+        <div class="team-grid">
+            <div class="team-card">
+                <h3>Ahnaf Ubaid Alfadhil</h3>
+                <p>140910250036</p>
             </div>
-            <div class="card">
-                <h3>IoT Integration</h3>
-                <p>ESP32 sebagai otak sistem mengirim data sensor melalui protokol WebSockets untuk latensi rendah.</p>
+            <div class="team-card">
+                <h3>Davin Trianto</h3>
+                <p>140910250037</p>
             </div>
-            <div class="card">
-                <h3>Real-Time 3D</h3>
-                <p>Visualisasi dome parametrik menggunakan Three.js untuk representasi posisi matahari secara akurat.</p>
+            <div class="team-card">
+                <h3>M Irfan Mufazzal</h3>
+                <p>140910250038</p>
+            </div>
+            <div class="team-card">
+                <h3>M Noufal Pramana</h3>
+                <p>140910250061</p>
             </div>
         </div>
     </section>

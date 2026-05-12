@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - SolarTracker IoT</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav>
+        <div class="logo">SolarTracker<span>IoT</span></div>
+        <ul>
+            <li><a href="index.html">Opening</a></li>
+            <li><a href="about.html" class="active">About</a></li>
+            <li><a href="tracker.html">3D Tracker</a></li>
+            <li><a href="dashboard.html">Data Analysis</a></li>
+        </ul>
+    </nav>
+
+    <main class="container">
+        <section class="about-section">
+            <h1>Tentang Proyek</h1>
+            
+            <div class="content-card bg-glass">
+                <h2>Latar Belakang</h2>
+                <p style="line-height: 1.8; text-align: justify; margin-bottom: 30px;">
+                    Transisi menuju energi terbarukan menuntut optimalisasi penyerapan energi surya, mengingat panel surya statis seringkali kehilangan potensi daya maksimalnya seiring dengan pergerakan matahari harian dan musiman. Oleh karena itu, diperlukan sistem dual-axis solar tracker yang mampu mengikuti arah cahaya secara presisi untuk meningkatkan efisiensi tangkapan energi secara signifikan. Kami mengintegrasikan teknologi Internet of Things (IoT) dengan visualisasi Digital Twin 3D secara real-time pada dashboard web memberikan solusi inovatif untuk menjembatani jarak fisik dan digital. Sistem ini memungkinkan pemantauan status pergerakan mekanis, dan evaluasi performa daya secara jarak jauh, sehingga efisiensi operasional dapat dimaksimalkan tanpa harus selalu melakukan inspeksi fisik di lapangan.
+                </p>
+
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <h3>Dual-Axis Precision</h3>
+                        <p>Menggunakan dua motor servo untuk mengikuti pergerakan matahari secara horizontal (Azimuth) dan vertikal (Elevation).</p>
+                    </div>
+                    <div class="feature-item">
+                        <h3>IoT Integration</h3>
+                        <p>ESP32 sebagai otak sistem mengirim data sensor melalui protokol WebSockets untuk latensi rendah.</p>
+                    </div>
+                    <div class="feature-item">
+                        <h3>Real-Time 3D</h3>
+                        <p>Visualisasi dome parametrik menggunakan Three.js untuk representasi posisi matahari secara akurat.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+</html>
