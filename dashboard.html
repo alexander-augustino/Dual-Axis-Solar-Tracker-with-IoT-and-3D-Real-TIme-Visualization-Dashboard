@@ -7,7 +7,9 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* CSS internal agar layout tetap terjaga */
+        /* Menggunakan font yang serupa dengan halaman Opening/About */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
         :root {
             --bg-dark: #0a0a0c;
             --card-bg: rgba(255, 255, 255, 0.05);
@@ -15,28 +17,31 @@
             --accent-yellow: #ffdd00;
             --text-main: #ffffff;
             --text-secondary: #a0a0a0;
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
         body {
             background-color: var(--bg-dark);
             color: var(--text-main);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: var(--font-family);
             margin: 0;
             padding: 20px;
+            -webkit-font-smoothing: antialiased;
         }
 
+        /* Navbar sesuai screenshot */
         nav {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--card-bg);
-            margin-bottom: 30px;
+            padding: 10px 40px;
+            margin-bottom: 40px;
         }
 
         .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
         }
 
         .logo span {
@@ -46,63 +51,78 @@
         nav ul {
             list-style: none;
             display: flex;
-            gap: 20px;
+            gap: 30px;
             margin: 0;
             padding: 0;
         }
 
         nav ul li a {
-            color: var(--text-main);
+            color: var(--text-secondary);
             text-decoration: none;
-            font-size: 0.9rem;
-            transition: color 0.3s;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
         }
 
         nav ul li a.active, nav ul li a:hover {
             color: var(--accent-cyan);
         }
 
+        /* Layout Grid */
         .dashboard-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 25px;
+            max-width: 1400px;
+            margin: 0 auto;
         }
 
         .chart-card {
             background: var(--card-bg);
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
         }
 
         .chart-card h3 {
             margin-top: 0;
-            font-size: 1.1rem;
-            margin-bottom: 20px;
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            letter-spacing: 0.2px;
         }
 
+        /* Table Styling */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
-            font-size: 0.85rem;
-        }
-
-        th, td {
-            text-align: left;
-            padding: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.9rem;
         }
 
         th {
-            color: var(--text-secondary);
-            font-weight: 500;
+            text-align: left;
+            padding: 12px;
+            color: var(--accent-cyan);
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
         }
 
-        ::-webkit-scrollbar {
-            width: 6px;
+        td {
+            padding: 14px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            font-weight: 400;
         }
-        ::-webkit-scrollbar-thumb {
+
+        /* Scrollbar */
+        .scroll-container::-webkit-scrollbar {
+            width: 5px;
+        }
+        .scroll-container::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
         }
@@ -130,10 +150,10 @@
         </div>
     </section>
 
-    <section class="dashboard-grid" style="margin-top: 20px;">
-        <div class="table-section chart-card">
-            <h3 style="color: #ffdd00;">Log Data Otomatis (Real-Time)</h3>
-            <div style="max-height: 400px; overflow-y: auto;">
+    <section class="dashboard-grid" style="margin-top: 25px;">
+        <div class="chart-card">
+            <h3 style="color: var(--accent-yellow);">Log Data Otomatis (Real-Time)</h3>
+            <div class="scroll-container" style="max-height: 350px; overflow-y: auto;">
                 <table id="autoTable">
                     <thead>
                         <tr>
@@ -144,14 +164,16 @@
                         </tr>
                     </thead>
                     <tbody id="autoLogBody">
-                        </tbody>
+                        <tr><td>12:20:01</td><td>65420</td><td>14.52V</td><td>224.7° / 63.9°</td></tr>
+                        <tr><td>12:15:05</td><td>58100</td><td>13.88V</td><td>223.2° / 65.5°</td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
 
-        <div class="table-section chart-card">
-            <h3 style="color: #00f2fe;">Log Perintah Manual (Interactive)</h3>
-            <div style="max-height: 400px; overflow-y: auto;">
+        <div class="chart-card">
+            <h3 style="color: var(--accent-cyan);">Log Perintah Manual (Interactive)</h3>
+            <div class="scroll-container" style="max-height: 350px; overflow-y: auto;">
                 <table id="manualTable">
                     <thead>
                         <tr>
@@ -161,83 +183,77 @@
                         </tr>
                     </thead>
                     <tbody id="manualLogBody">
-                        </tbody>
+                        <tr><td>12:18:12</td><td>180.0° / 45.0°</td><td><span style="color: #4ade80;">Success</span></td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
     </section>
 
     <script>
-        // 1. Konfigurasi Animasi Global agar transisi naik terlihat smooth
+        // Animasi halus sesuai permintaan Davin
         const chartAnimation = {
-            duration: 1000,
+            duration: 1200,
             easing: 'easeInOutQuart',
-            lazy: false
         };
 
-        // 2. Chart Luminasitas (Lux) - SEKARANG TEMA KUNING
-        const ctxLux = document.getElementById('luxChart').getContext('2d');
-        new Chart(ctxLux, {
+        const commonOptions = {
+            responsive: true,
+            animation: chartAnimation,
+            scales: {
+                y: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#a0a0a0', font: { family: 'Inter' } }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#a0a0a0', font: { family: 'Inter' } }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: { color: '#ffffff', font: { family: 'Inter', size: 12 } }
+                }
+            }
+        };
+
+        // --- Chart Lux (Kuning) ---
+        new Chart(document.getElementById('luxChart'), {
             type: 'line',
             data: {
                 labels: ['12:00', '12:05', '12:10', '12:15', '12:20'],
                 datasets: [{
-                    label: 'Lux',
+                    label: 'Lux Intensity',
                     data: [45000, 52000, 61000, 58000, 65000],
-                    borderColor: '#ffdd00', // Kuning
-                    backgroundColor: 'rgba(255, 221, 0, 0.1)', 
+                    borderColor: '#ffdd00',
+                    backgroundColor: 'rgba(255, 221, 0, 0.05)',
                     fill: true,
                     tension: 0.4,
-                    pointRadius: 4,
-                    pointBackgroundColor: '#ffdd00'
+                    pointRadius: 5,
+                    pointHoverRadius: 8
                 }]
             },
-            options: { 
-                responsive: true, 
-                animation: chartAnimation, // Terapkan transisi naik
-                scales: { 
-                    y: { 
-                        beginAtZero: true,
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' } 
-                    },
-                    x: { grid: { display: false } }
-                },
-                plugins: {
-                    legend: { labels: { color: '#ffffff' } }
-                }
-            }
+            options: commonOptions
         });
 
-        // 3. Chart Tegangan (Volt) - SEKARANG TEMA BIRU MUDA
-        const ctxVolt = document.getElementById('voltChart').getContext('2d');
-        new Chart(ctxVolt, {
+        // --- Chart Volt (Biru Muda) ---
+        new Chart(document.getElementById('voltChart'), {
             type: 'line',
             data: {
                 labels: ['12:00', '12:05', '12:10', '12:15', '12:20'],
                 datasets: [{
-                    label: 'Voltage',
+                    label: 'Panel Voltage',
                     data: [12.4, 13.1, 14.2, 13.8, 14.5],
-                    borderColor: '#00f2fe', // Biru Muda
-                    backgroundColor: 'rgba(0, 242, 254, 0.1)',
+                    borderColor: '#00f2fe',
+                    backgroundColor: 'rgba(0, 242, 254, 0.05)',
                     fill: true,
                     tension: 0.4,
-                    pointRadius: 4,
-                    pointBackgroundColor: '#00f2fe'
+                    pointRadius: 5,
+                    pointHoverRadius: 8
                 }]
             },
-            options: { 
-                responsive: true, 
-                animation: chartAnimation, // Terapkan transisi naik
-                scales: { 
-                    y: { 
-                        beginAtZero: false, 
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
-                    }
-                },
-                plugins: {
-                    legend: { labels: { color: '#ffffff' } }
-                }
-            }
+            options: commonOptions
         });
     </script>
 </body>
