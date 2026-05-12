@@ -1,9 +1,7 @@
-// --- Konfigurasi Dasar Three.js ---
 let scene, camera, renderer, sun, dome, controls;
 let isRealTimeMode = false; 
 const container = document.getElementById('canvas-container');
 
-// --- Konfigurasi WebSocket ---
 const gateway = `ws://192.168.XX.XX/ws`; 
 let socket;
 
@@ -24,15 +22,39 @@ function initWebSocket() {
     };
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
+        const nowTime = new Date().toLocaleTimeString();
+
         if (data.type === "telemetry") {
             document.getElementById('valAzimuth').innerText = data.az.toFixed(2);
             document.getElementById('valElevation').innerText = data.el.toFixed(2);
+            
             if (!isRealTimeMode) updateSunVisual(data.az, data.el);
+
+            // INPUT KE LOG OTOMATIS (Jika di dashboard)
+            updateAutoLog(nowTime, data.lux.toFixed(0), data.volt.toFixed(2), `${data.az.toFixed(0)}/${data.el.toFixed(0)}`);
         }
     };
 }
 
-// Fungsi label tetap BOLD & BESAR sesuai request sebelumnya
+// Fungsi Update Tabel Log Otomatis
+function updateAutoLog(time, lux, volt, pos) {
+    const body = document.getElementById('autoLogBody');
+    if(!body) return;
+    const row = body.insertRow(0);
+    row.innerHTML = `<td>${time}</td><td>${lux}</td><td>${volt}</td><td>${pos}</td>`;
+    if(body.rows.length > 15) body.deleteRow(15);
+}
+
+// Fungsi Update Tabel Log Manual
+function updateManualLog(time, target) {
+    const body = document.getElementById('manualLogBody');
+    if(!body) return;
+    const row = body.insertRow(0);
+    row.style.color = "#ffdd00";
+    row.innerHTML = `<td>${time}</td><td>${target}</td><td>Executed</td>`;
+    if(body.rows.length > 10) body.deleteRow(10);
+}
+
 function makeTextSprite(message, x, y, z, color = "white", fontSize = 55) {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
@@ -56,9 +78,7 @@ function makeTextSprite(message, x, y, z, color = "white", fontSize = 55) {
 
 function init3D() {
     scene = new THREE.Scene();
-    
     camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-    // HANYA MENGUBAH ARAH ATAS KAMERA KE Z
     camera.up.set(0, 0, 1); 
     camera.position.set(10, -10, 10);
 
@@ -66,7 +86,6 @@ function init3D() {
     renderer.setSize(container.clientWidth, container.clientHeight);
     container.appendChild(renderer.domElement);
 
-    // Navigasi tetap halus (zoomSpeed 0.5)
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
@@ -75,12 +94,10 @@ function init3D() {
     const axesHelper = new THREE.AxesHelper(6); 
     scene.add(axesHelper);
 
-    // REVISI POSISI LABEL: Y dan Z bertukar tempat
     scene.add(makeTextSprite("X (East)", 6.8, 0, 0, "#ff4d4d"));
-    scene.add(makeTextSprite("Y (North)", 0, 6.8, 0, "#4dff4d")); // Sekarang di lantai
-    scene.add(makeTextSprite("Z (Zenith)", 0, 0, 6.5, "#4d4dff")); // Sekarang ke atas
+    scene.add(makeTextSprite("Y (North)", 0, 6.8, 0, "#4dff4d")); 
+    scene.add(makeTextSprite("Z (Zenith)", 0, 0, 6.5, "#4d4dff")); 
 
-    // Label Arah Mata Angin di bidang XY (Lantai)
     const rL = 5.8;
     const dL = rL * 0.707;
     scene.add(makeTextSprite("TIMUR (E)", rL, 0, 0.1, "#ffdd00", 60));
@@ -88,13 +105,8 @@ function init3D() {
     scene.add(makeTextSprite("UTARA (N)", 0, rL, 0.1, "#00f2fe", 60));
     scene.add(makeTextSprite("SELATAN (S)", 0, -rL, 0.1, "#00f2fe", 60));
     
-    scene.add(makeTextSprite("TL", dL, dL, 0.1, "#cccccc", 45));
-    scene.add(makeTextSprite("BL", -dL, dL, 0.1, "#cccccc", 45));
-    scene.add(makeTextSprite("TG", dL, -dL, 0.1, "#cccccc", 45));
-    scene.add(makeTextSprite("BD", -dL, -dL, 0.1, "#cccccc", 45));
-
     const gridHelper = new THREE.GridHelper(12, 12, 0x444444, 0x222222);
-    gridHelper.rotation.x = Math.PI / 2; // Grid jadi lantai XY
+    gridHelper.rotation.x = Math.PI / 2; 
     scene.add(gridHelper);
 
     const ambientLight = new THREE.AmbientLight(0x404040, 2);
@@ -103,7 +115,7 @@ function init3D() {
     const domeGeo = new THREE.SphereGeometry(5, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2);
     const domeMat = new THREE.MeshBasicMaterial({ color: 0x00f2fe, wireframe: true, transparent: true, opacity: 0.12 });
     dome = new THREE.Mesh(domeGeo, domeMat);
-    dome.rotation.x = Math.PI / 2; // Dome mencuat ke sumbu Z
+    dome.rotation.x = Math.PI / 2; 
     scene.add(dome);
 
     const sunGeo = new THREE.SphereGeometry(0.4, 16, 16);
@@ -123,15 +135,13 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-// HANYA MENGUBAH RUMUS AGAR Z ADALAH ELEVASI
 function updateSunVisual(az, el) {
     const r = 5;
     const radAz = (az) * (Math.PI / 180);
     const radEl = (el) * (Math.PI / 180);
-
     sun.position.x = r * Math.cos(radEl) * Math.sin(radAz);
     sun.position.y = r * Math.cos(radEl) * Math.cos(radAz);
-    sun.position.z = r * Math.sin(radEl); // Z = Tinggi
+    sun.position.z = r * Math.sin(radEl); 
 }
 
 function updateSunByTime(date) {
@@ -141,13 +151,10 @@ function updateSunByTime(date) {
         let el = Math.sin(dayProgress * Math.PI) * 90;
         let az = 90 + (dayProgress * 180);
         updateSunVisual(az, el);
-        document.getElementById('valAzimuth').innerText = az.toFixed(2);
-        document.getElementById('valElevation').innerText = el.toFixed(2);
-    } else {
-        updateSunVisual(0, -10); 
     }
 }
 
+// TOGGLE REALTIME MODE
 container.addEventListener('dblclick', () => {
     isRealTimeMode = !isRealTimeMode;
     const display = document.getElementById('modeDisplay');
@@ -155,11 +162,16 @@ container.addEventListener('dblclick', () => {
         display.innerText = isRealTimeMode ? "REAL-TIME (CLOCK BASED)" : "MANUAL / INTERACTIVE";
         display.style.color = isRealTimeMode ? "#ffdd00" : "#00f2fe";
     }
+    // Kirim command mode balik ke ESP32
+    if(socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ mode: isRealTimeMode ? "auto" : "manual" }));
+    }
 });
 
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
+// CLICK DOME TO COMMAND ESP32
 container.addEventListener('click', (event) => {
     if (isRealTimeMode) return;
     const rect = container.getBoundingClientRect();
@@ -167,19 +179,29 @@ container.addEventListener('click', (event) => {
     mouse.y = -((event.clientY - rect.top) / container.clientHeight) * 2 + 1;
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObject(dome);
+    
     if (intersects.length > 0) {
         const p = intersects[0].point;
         sun.position.copy(p);
-        let el = Math.asin(p.z / 5) * (180 / Math.PI); // Logic Z-Up
+        let el = Math.asin(p.z / 5) * (180 / Math.PI); 
         let az = Math.atan2(p.x, p.y) * (180 / Math.PI);
+        
+        // Update Panel
         document.getElementById('valAzimuth').innerText = az.toFixed(2);
         document.getElementById('valElevation').innerText = el.toFixed(2);
+
+        // KIRIM DATA KE ESP32
+        if(socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                type: "cmd",
+                az: parseFloat(az.toFixed(2)),
+                el: parseFloat(el.toFixed(2))
+            }));
+        }
+        
+        // Log ke Manual Table
+        updateManualLog(new Date().toLocaleTimeString(), `${az.toFixed(1)}° / ${el.toFixed(1)}°`);
     }
 });
 
 window.onload = () => { init3D(); initWebSocket(); };
-window.addEventListener('resize', () => {
-    camera.aspect = container.clientWidth / container.clientHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(container.clientWidth, container.clientHeight);
-});
