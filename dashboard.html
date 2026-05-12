@@ -6,6 +6,107 @@
     <title>Solar Data Dashboard</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* CSS internal agar layout tetap terjaga */
+        :root {
+            --bg-dark: #0a0a0c;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --accent-cyan: #00f2fe;
+            --accent-yellow: #ffdd00;
+            --text-main: #ffffff;
+            --text-secondary: #a0a0a0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--card-bg);
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .logo span {
+            color: var(--accent-cyan);
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 20px;
+            margin: 0;
+            padding: 0;
+        }
+
+        nav ul li a {
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+
+        nav ul li a.active, nav ul li a:hover {
+            color: var(--accent-cyan);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chart-card h3 {
+            margin-top: 0;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        th {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+    </style>
 </head>
 <body>
     <nav>
@@ -29,9 +130,9 @@
         </div>
     </section>
 
-    <section class="dashboard-grid" style="grid-template-columns: 1fr 1fr; margin-top: 20px;">
+    <section class="dashboard-grid" style="margin-top: 20px;">
         <div class="table-section chart-card">
-            <h3 style="color: #00f2fe;">Log Data Otomatis (Real-Time)</h3>
+            <h3 style="color: #ffdd00;">Log Data Otomatis (Real-Time)</h3>
             <div style="max-height: 400px; overflow-y: auto;">
                 <table id="autoTable">
                     <thead>
@@ -42,13 +143,14 @@
                             <th>Posisi (Az/El)</th>
                         </tr>
                     </thead>
-                    <tbody id="autoLogBody"></tbody>
+                    <tbody id="autoLogBody">
+                        </tbody>
                 </table>
             </div>
         </div>
 
         <div class="table-section chart-card">
-            <h3 style="color: #ffdd00;">Log Perintah Manual (Interactive)</h3>
+            <h3 style="color: #00f2fe;">Log Perintah Manual (Interactive)</h3>
             <div style="max-height: 400px; overflow-y: auto;">
                 <table id="manualTable">
                     <thead>
@@ -58,85 +160,85 @@
                             <th>Status</th>
                         </tr>
                     </thead>
-                    <tbody id="manualLogBody"></tbody>
+                    <tbody id="manualLogBody">
+                        </tbody>
                 </table>
             </div>
         </div>
     </section>
-<script>
-    // Konfigurasi Animasi Global agar halus
-    const chartAnimation = {
-        duration: 1000,      // Durasi animasi 1 detik
-        easing: 'easeInOutQuart', // Efek percepatan yang smooth
-        lazy: false
-    };
 
-    // --- Chart Luminasitas (Lux) ---
-    const ctxLux = document.getElementById('luxChart').getContext('2d');
-    new Chart(ctxLux, {
-        type: 'line',
-        data: {
-            labels: ['12:00', '12:05', '12:10', '12:15', '12:20'],
-            datasets: [{
-                label: 'Lux',
-                data: [45000, 52000, 61000, 58000, 65000],
-                borderColor: '#00f2fe', // Biru Muda
-                backgroundColor: 'rgba(0, 242, 254, 0.1)', // Isi bawah garis
-                fill: true,
-                tension: 0.4,
-                pointRadius: 4,
-                pointBackgroundColor: '#00f2fe'
-            }]
-        },
-        options: { 
-            responsive: true, 
-            animation: chartAnimation, // Terapkan animasi
-            scales: { 
-                y: { 
-                    beginAtZero: true,
-                    grid: { color: 'rgba(255, 255, 255, 0.05)' } 
+    <script>
+        // 1. Konfigurasi Animasi Global agar transisi naik terlihat smooth
+        const chartAnimation = {
+            duration: 1000,
+            easing: 'easeInOutQuart',
+            lazy: false
+        };
+
+        // 2. Chart Luminasitas (Lux) - SEKARANG TEMA KUNING
+        const ctxLux = document.getElementById('luxChart').getContext('2d');
+        new Chart(ctxLux, {
+            type: 'line',
+            data: {
+                labels: ['12:00', '12:05', '12:10', '12:15', '12:20'],
+                datasets: [{
+                    label: 'Lux',
+                    data: [45000, 52000, 61000, 58000, 65000],
+                    borderColor: '#ffdd00', // Kuning
+                    backgroundColor: 'rgba(255, 221, 0, 0.1)', 
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#ffdd00'
+                }]
+            },
+            options: { 
+                responsive: true, 
+                animation: chartAnimation, // Terapkan transisi naik
+                scales: { 
+                    y: { 
+                        beginAtZero: true,
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' } 
+                    },
+                    x: { grid: { display: false } }
                 },
-                x: { 
-                    grid: { display: false } 
+                plugins: {
+                    legend: { labels: { color: '#ffffff' } }
                 }
-            },
-            plugins: {
-                legend: { labels: { color: '#ffffff' } }
             }
-        }
-    });
+        });
 
-    // --- Chart Tegangan (Volt) ---
-    const ctxVolt = document.getElementById('voltChart').getContext('2d');
-    new Chart(ctxVolt, {
-        type: 'line',
-        data: {
-            labels: ['12:00', '12:05', '12:10', '12:15', '12:20'],
-            datasets: [{
-                label: 'Voltage',
-                data: [12.4, 13.1, 14.2, 13.8, 14.5],
-                borderColor: '#ffdd00', // Kuning (Agar kontras sesuai ide manualmu tadi)
-                backgroundColor: 'rgba(255, 221, 0, 0.1)',
-                fill: true,
-                tension: 0.4,
-                pointRadius: 4,
-                pointBackgroundColor: '#ffdd00'
-            }]
-        },
-        options: { 
-            responsive: true, 
-            animation: chartAnimation, // Terapkan animasi
-            scales: { 
-                y: { 
-                    beginAtZero: false, // Volt jarang mulai dari 0
-                    grid: { color: 'rgba(255, 255, 255, 0.05)' }
-                }
+        // 3. Chart Tegangan (Volt) - SEKARANG TEMA BIRU MUDA
+        const ctxVolt = document.getElementById('voltChart').getContext('2d');
+        new Chart(ctxVolt, {
+            type: 'line',
+            data: {
+                labels: ['12:00', '12:05', '12:10', '12:15', '12:20'],
+                datasets: [{
+                    label: 'Voltage',
+                    data: [12.4, 13.1, 14.2, 13.8, 14.5],
+                    borderColor: '#00f2fe', // Biru Muda
+                    backgroundColor: 'rgba(0, 242, 254, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#00f2fe'
+                }]
             },
-            plugins: {
-                legend: { labels: { color: '#ffffff' } }
+            options: { 
+                responsive: true, 
+                animation: chartAnimation, // Terapkan transisi naik
+                scales: { 
+                    y: { 
+                        beginAtZero: false, 
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                    }
+                },
+                plugins: {
+                    legend: { labels: { color: '#ffffff' } }
+                }
             }
-        }
-    });
-</script>
+        });
+    </script>
 </body>
 </html>
