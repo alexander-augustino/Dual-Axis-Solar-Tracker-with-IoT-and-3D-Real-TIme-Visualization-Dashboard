@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Solar Data Dashboard</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* CSS internal agar layout tetap terjaga */
         :root {
             --bg-dark: #0a0a0c;
             --card-bg: rgba(255, 255, 255, 0.05);
@@ -15,12 +17,15 @@
             --accent-yellow: #ffdd00;
             --text-main: #ffffff;
             --text-secondary: #a0a0a0;
+            /* 2. Ganti variabel font ke Poppins */
+            --font-primary: 'Poppins', sans-serif;
         }
 
         body {
             background-color: var(--bg-dark);
             color: var(--text-main);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            /* Terapkan font ke seluruh body */
+            font-family: var(--font-primary);
             margin: 0;
             padding: 20px;
         }
@@ -36,7 +41,7 @@
 
         .logo {
             font-size: 1.5rem;
-            font-weight: bold;
+            font-weight: 600; /* Poppins terlihat bagus di weight 600 */
         }
 
         .logo span {
@@ -78,6 +83,7 @@
         .chart-card h3 {
             margin-top: 0;
             font-size: 1.1rem;
+            font-weight: 600;
             margin-bottom: 20px;
         }
 
@@ -96,7 +102,7 @@
 
         th {
             color: var(--text-secondary);
-            font-weight: 500;
+            font-weight: 600;
         }
 
         ::-webkit-scrollbar {
@@ -143,8 +149,7 @@
                             <th>Posisi (Az/El)</th>
                         </tr>
                     </thead>
-                    <tbody id="autoLogBody">
-                        </tbody>
+                    <tbody id="autoLogBody"></tbody>
                 </table>
             </div>
         </div>
@@ -160,22 +165,23 @@
                             <th>Status</th>
                         </tr>
                     </thead>
-                    <tbody id="manualLogBody">
-                        </tbody>
+                    <tbody id="manualLogBody"></tbody>
                 </table>
             </div>
         </div>
     </section>
 
     <script>
-        // 1. Konfigurasi Animasi Global agar transisi naik terlihat smooth
+        // Set Global Font untuk semua Chart
+        Chart.defaults.font.family = "'Poppins', sans-serif";
+        Chart.defaults.color = '#ffffff';
+
         const chartAnimation = {
             duration: 1000,
             easing: 'easeInOutQuart',
             lazy: false
         };
 
-        // 2. Chart Luminasitas (Lux) - SEKARANG TEMA KUNING
         const ctxLux = document.getElementById('luxChart').getContext('2d');
         new Chart(ctxLux, {
             type: 'line',
@@ -184,7 +190,7 @@
                 datasets: [{
                     label: 'Lux',
                     data: [45000, 52000, 61000, 58000, 65000],
-                    borderColor: '#ffdd00', // Kuning
+                    borderColor: '#ffdd00',
                     backgroundColor: 'rgba(255, 221, 0, 0.1)', 
                     fill: true,
                     tension: 0.4,
@@ -194,21 +200,24 @@
             },
             options: { 
                 responsive: true, 
-                animation: chartAnimation, // Terapkan transisi naik
+                animation: chartAnimation,
                 scales: { 
                     y: { 
                         beginAtZero: true,
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' } 
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { font: { size: 11 } }
                     },
-                    x: { grid: { display: false } }
+                    x: { 
+                        grid: { display: false },
+                        ticks: { font: { size: 11 } }
+                    }
                 },
                 plugins: {
-                    legend: { labels: { color: '#ffffff' } }
+                    legend: { labels: { font: { size: 12 } } }
                 }
             }
         });
 
-        // 3. Chart Tegangan (Volt) - SEKARANG TEMA BIRU MUDA
         const ctxVolt = document.getElementById('voltChart').getContext('2d');
         new Chart(ctxVolt, {
             type: 'line',
@@ -217,7 +226,7 @@
                 datasets: [{
                     label: 'Voltage',
                     data: [12.4, 13.1, 14.2, 13.8, 14.5],
-                    borderColor: '#00f2fe', // Biru Muda
+                    borderColor: '#00f2fe',
                     backgroundColor: 'rgba(0, 242, 254, 0.1)',
                     fill: true,
                     tension: 0.4,
@@ -227,15 +236,17 @@
             },
             options: { 
                 responsive: true, 
-                animation: chartAnimation, // Terapkan transisi naik
+                animation: chartAnimation,
                 scales: { 
                     y: { 
                         beginAtZero: false, 
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
-                    }
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { font: { size: 11 } }
+                    },
+                    x: { ticks: { font: { size: 11 } } }
                 },
                 plugins: {
-                    legend: { labels: { color: '#ffffff' } }
+                    legend: { labels: { font: { size: 12 } } }
                 }
             }
         });
