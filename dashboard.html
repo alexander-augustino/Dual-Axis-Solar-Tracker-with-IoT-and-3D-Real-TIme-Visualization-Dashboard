@@ -63,38 +63,80 @@
             </div>
         </div>
     </section>
+<script>
+    // Konfigurasi Animasi Global agar halus
+    const chartAnimation = {
+        duration: 1000,      // Durasi animasi 1 detik
+        easing: 'easeInOutQuart', // Efek percepatan yang smooth
+        lazy: false
+    };
 
-    <script>
-        // Chart Tetap Sama
-        const ctxLux = document.getElementById('luxChart').getContext('2d');
-        new Chart(ctxLux, {
-            type: 'line',
-            data: {
-                labels: ['12:00', '12:05', '12:10', '12:15', '12:20'],
-                datasets: [{
-                    label: 'Lux',
-                    data: [45000, 52000, 61000, 58000, 65000],
-                    borderColor: '#00f2fe',
-                    tension: 0.4
-                }]
+    // --- Chart Luminasitas (Lux) ---
+    const ctxLux = document.getElementById('luxChart').getContext('2d');
+    new Chart(ctxLux, {
+        type: 'line',
+        data: {
+            labels: ['12:00', '12:05', '12:10', '12:15', '12:20'],
+            datasets: [{
+                label: 'Lux',
+                data: [45000, 52000, 61000, 58000, 65000],
+                borderColor: '#00f2fe', // Biru Muda
+                backgroundColor: 'rgba(0, 242, 254, 0.1)', // Isi bawah garis
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+                pointBackgroundColor: '#00f2fe'
+            }]
+        },
+        options: { 
+            responsive: true, 
+            animation: chartAnimation, // Terapkan animasi
+            scales: { 
+                y: { 
+                    beginAtZero: true,
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' } 
+                },
+                x: { 
+                    grid: { display: false } 
+                }
             },
-            options: { responsive: true, scales: { y: { beginAtZero: true } } }
-        });
+            plugins: {
+                legend: { labels: { color: '#ffffff' } }
+            }
+        }
+    });
 
-        const ctxVolt = document.getElementById('voltChart').getContext('2d');
-        new Chart(ctxVolt, {
-            type: 'line',
-            data: {
-                labels: ['12:00', '12:05', '12:10', '12:15', '12:20'],
-                datasets: [{
-                    label: 'Voltage',
-                    data: [12.4, 13.1, 14.2, 13.8, 14.5],
-                    borderColor: '#4facfe',
-                    tension: 0.4
-                }]
+    // --- Chart Tegangan (Volt) ---
+    const ctxVolt = document.getElementById('voltChart').getContext('2d');
+    new Chart(ctxVolt, {
+        type: 'line',
+        data: {
+            labels: ['12:00', '12:05', '12:10', '12:15', '12:20'],
+            datasets: [{
+                label: 'Voltage',
+                data: [12.4, 13.1, 14.2, 13.8, 14.5],
+                borderColor: '#ffdd00', // Kuning (Agar kontras sesuai ide manualmu tadi)
+                backgroundColor: 'rgba(255, 221, 0, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+                pointBackgroundColor: '#ffdd00'
+            }]
+        },
+        options: { 
+            responsive: true, 
+            animation: chartAnimation, // Terapkan animasi
+            scales: { 
+                y: { 
+                    beginAtZero: false, // Volt jarang mulai dari 0
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                }
             },
-            options: { responsive: true }
-        });
-    </script>
+            plugins: {
+                legend: { labels: { color: '#ffffff' } }
+            }
+        }
+    });
+</script>
 </body>
 </html>
