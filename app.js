@@ -25,13 +25,19 @@ function initWebSocket() {
         const nowTime = new Date().toLocaleTimeString();
 
         if (data.type === "telemetry") {
-            document.getElementById('valAzimuth').innerText = data.az.toFixed(2);
-            document.getElementById('valElevation').innerText = data.el.toFixed(2);
-            
-            if (!isRealTimeMode) updateSunVisual(data.az, data.el);
+            // PERBAIKAN: Parsing data secara eksplisit ke tipe Number agar fungsi .toFixed() tidak membuat crash
+            const azVal = Number(data.az) || 0;
+            const elVal = Number(data.el) || 0;
+            const luxVal = Number(data.lux) || 0;
+            const voltVal = Number(data.volt) || 0;
 
-            // INPUT KE LOG OTOMATIS (Jika di dashboard)
-            updateAutoLog(nowTime, data.lux.toFixed(0), data.volt.toFixed(2), `${data.az.toFixed(0)}/${data.el.toFixed(0)}`);
+            document.getElementById('valAzimuth').innerText = azVal.toFixed(2);
+            document.getElementById('valElevation').innerText = elVal.toFixed(2);
+            
+            if (!isRealTimeMode) updateSunVisual(azVal, elVal);
+
+            // INPUT KE LOG OTOMATIS (Sekarang aman dan langsung tercatat di tabel dashboard)
+            updateAutoLog(nowTime, luxVal.toFixed(0), voltVal.toFixed(2), `${azVal.toFixed(0)}/${elVal.toFixed(0)}`);
         }
     };
 }
