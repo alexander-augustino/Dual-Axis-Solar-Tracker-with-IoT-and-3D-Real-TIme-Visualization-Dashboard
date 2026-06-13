@@ -2,7 +2,7 @@ let scene, camera, renderer, sun, dome, controls;
 let isRealTimeMode = false; 
 const container = document.getElementById('canvas-container');
 
-const gateway = `ws://192.168.XX.XX/ws`; 
+const gateway = `ws://192.168.102.82/ws`; 
 let socket;
 
 function initWebSocket() {
