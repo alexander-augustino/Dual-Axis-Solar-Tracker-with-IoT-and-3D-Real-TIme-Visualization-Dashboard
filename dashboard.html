@@ -135,14 +135,28 @@
         // --- MANAJEMEN WEBSOCKET ---
         const gateway = `ws://192.168.102.82/ws`; 
         let socket;
+        let isServerOnline = false;       // Flag Pengunci: Mencegah plotting hantu saat alat mati
+        let currentSystemMode = "auto";   // State Tracker: Memisahkan log otomatis dan manual
 
         function initWebSocket() {
             socket = new WebSocket(gateway);
             
+            socket.onopen = () => {
+                isServerOnline = true; // Izinkan plotting dan perhitungan jika koneksi aktif
+                console.log("WebSocket terhubung. Memulai pemantauan data...");
+            };
+            
             socket.onmessage = (event) => {
+                // SOLUSI MASALAH 2: Jika alat offline/mati, blokir total seluruh rendering data!
+                if (!isServerOnline) return;
+
                 const data = JSON.parse(event.data);
-                // Format penanda waktu: HH:MM:SS
                 const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+                // Intersepsi perubahan mode dari pengiriman tombol/state web sebelah
+                if (data.mode) {
+                    currentSystemMode = data.mode; // Menangkap status "auto" atau "manual"
+                }
 
                 // 1. TANGKAP DATA TELEMETRI ALAT
                 if (data.type === "telemetry") {
@@ -151,15 +165,27 @@
                     const luxVal = Number(data.lux) || 0;
                     const voltVal = Number(data.volt) || 0;
 
-                    // Suntik data ke tabel log otomatis
-                    const autoBody = document.getElementById('autoLogBody');
-                    if (autoBody) {
-                        const row = autoBody.insertRow(0);
-                        row.innerHTML = `<td>${nowTime}</td><td>${luxVal.toFixed(0)}</td><td>${voltVal.toFixed(2)} V</td><td>${azVal.toFixed(0)}°/${elVal.toFixed(0)}°</td>`;
-                        if (autoBody.rows.length > 15) autoBody.deleteRow(15);
+                    // SOLUSI MASALAH 1: Cek state mode saat ini untuk menentukan penempatan tabel log
+                    if (currentSystemMode === "manual") {
+                        // Jika mode manual, arahkan data pergerakan ke tabel kanan (Log Perintah Manual)
+                        const manualBody = document.getElementById('manualLogBody');
+                        if (manualBody) {
+                            const row = manualBody.insertRow(0);
+                            row.style.color = "var(--accent)";
+                            row.innerHTML = `<td>${nowTime}</td><td>${azVal.toFixed(1)}° / ${elVal.toFixed(1)}°</td><td>Executed</td>`;
+                            if (manualBody.rows.length > 10) manualBody.deleteRow(10);
+                        }
+                    } else {
+                        // Jika mode auto (LDR), arahkan data berkala ke tabel kiri (Log Data Otomatis)
+                        const autoBody = document.getElementById('autoLogBody');
+                        if (autoBody) {
+                            const row = autoBody.insertRow(0);
+                            row.innerHTML = `<td>${nowTime}</td><td>${luxVal.toFixed(0)}</td><td>${voltVal.toFixed(2)} V</td><td>${azVal.toFixed(0)}°/${elVal.toFixed(0)}°</td>`;
+                            if (autoBody.rows.length > 15) autoBody.deleteRow(15);
+                        }
                     }
 
-                    // Suntik data titik baru ke dalam grafik
+                    // Jalankan perhitungan plotting titik baru ke dalam grafik
                     luxChartInstance.data.labels.push(nowTime);
                     voltChartInstance.data.labels.push(nowTime);
 
@@ -179,8 +205,9 @@
                     voltChartInstance.update();
                 } 
                 
-                // 2. TANGKAP DATA LOG BALIKAN SAAT USER KLIK KUBAH 3D DI HALAMAN SEBELAH
+                // 2. TANGKAP INTERAKSI KLIK KUBAH LANGSUNG
                 else if (data.type === "manual_log" || data.type === "cmd") {
+                    currentSystemMode = "manual"; // Set mode ke manual karena ada interaksi user
                     const manualBody = document.getElementById('manualLogBody');
                     if (manualBody) {
                         const row = manualBody.insertRow(0);
@@ -192,6 +219,8 @@
             };
 
             socket.onclose = () => {
+                isServerOnline = false; // SOLUSI MASALAH 2: Kunci dimatikan, grafik otomatis diam menahan data terakhir
+                console.log("WebSocket terputus dari ESP32. Mencoba menghubungkan kembali...");
                 setTimeout(initWebSocket, 2000); // Auto reconnect jika jaringan ESP terganggu
             };
         }
