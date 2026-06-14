@@ -1,103 +1,213 @@
-#include <WiFi.h>      
-#include <ESPAsyncWebServer.h>
-#include <AsyncTCP.h>  
-#include <ArduinoJson.h>
-#include <ESP32Servo.h>
+let scene, camera, renderer, sun, dome, controls;
+let isRealTimeMode = false; 
+const container = document.getElementById('canvas-container');
 
-const char* ssid = "NAMA_WIFI_ANDA";
-const char* password = "PASSWORD_WIFI_ANDA";
+const gateway = `ws://192.168.102.82/ws`; 
+let socket;
 
-const int pinServoAzimuth = 13;   
-const int pinServoElevation = 12; 
-const int pinSensorVolt = 34;     
-const int pinSensorLux = 35;      
+function initWebSocket() {
+    socket = new WebSocket(gateway);
+    socket.onopen = () => {
+        if(document.getElementById('valStatus')) {
+            document.getElementById('valStatus').innerText = "Online";
+            document.getElementById('valStatus').className = "status-online";
+        }
+    };
+    socket.onclose = () => {
+        if(document.getElementById('valStatus')) {
+            document.getElementById('valStatus').innerText = "Offline";
+            document.getElementById('valStatus').className = "status-offline";
+        }
+        setTimeout(initWebSocket, 2000);
+    };
+    socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        const nowTime = new Date().toLocaleTimeString();
 
-AsyncWebServer server(80);
-AsyncWebSocket ws("/ws");
-Servo servoAz;
-Servo servoEl;
+        if (data.type === "telemetry") {
+            // PERBAIKAN: Parsing data secara eksplisit ke tipe Number agar fungsi .toFixed() tidak membuat crash
+            const azVal = Number(data.az) || 0;
+            const elVal = Number(data.el) || 0;
+            const luxVal = Number(data.lux) || 0;
+            const voltVal = Number(data.volt) || 0;
 
-float currentAz = 90.0;
-float currentEl = 45.0;
-bool isManualMode = false;
+            document.getElementById('valAzimuth').innerText = azVal.toFixed(2);
+            document.getElementById('valElevation').innerText = elVal.toFixed(2);
+            
+            if (!isRealTimeMode) updateSunVisual(azVal, elVal);
 
-void sendTelemetry() {
-  StaticJsonDocument<200> doc;
-  doc["type"] = "telemetry";
-  doc["az"] = currentAz;
-  doc["el"] = currentEl;
-  doc["lux"] = analogRead(pinSensorLux) * (100000.0 / 4095.0); 
-  doc["volt"] = (analogRead(pinSensorVolt) * 3.3 / 4095.0) * 5.0; 
-  
-  String jsonString;
-  serializeJson(doc, jsonString);
-  ws.textAll(jsonString);
+            // INPUT KE LOG OTOMATIS (Sekarang aman dan langsung tercatat di tabel dashboard)
+            updateAutoLog(nowTime, luxVal.toFixed(0), voltVal.toFixed(2), `${azVal.toFixed(0)}/${elVal.toFixed(0)}`);
+        }
+    };
 }
 
-void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type,
-             void *arg, uint8_t *data, size_t len) {
-             
-  if (type == WS_EVT_DATA) {
-    AwsFrameInfo *info = (AwsFrameInfo*)arg;
-    if (info->final && info->index == 0 && info->len == len && info->opcode == WS_OPCODE_TEXT) {
-      data[len] = 0;
-      StaticJsonDocument<200> doc;
-      DeserializationError error = deserializeJson(doc, (char*)data);
-      
-      if (!error) {
-        // Cek jika ada perubahan mode
-        if (doc.containsKey("mode")) {
-          isManualMode = (doc["mode"] == "manual");
-        }
+// Fungsi Update Tabel Log Otomatis
+function updateAutoLog(time, lux, volt, pos) {
+    const body = document.getElementById('autoLogBody');
+    if(!body) return;
+    const row = body.insertRow(0);
+    row.innerHTML = `<td>${time}</td><td>${lux}</td><td>${volt}</td><td>${pos}</td>`;
+    if(body.rows.length > 15) body.deleteRow(15);
+}
 
-        // Cek perintah koordinat dari klik Dome
-        if (doc.containsKey("az") && doc.containsKey("el")) {
-          isManualMode = true; 
-          currentAz = doc["az"];
-          currentEl = doc["el"];
-          
-          // Konversi Azimuth (-180 ke 180) ke (0 ke 180) untuk servo jika perlu
-          // Di sini kita langsung tulis karena mapping 3D kita sudah disesuaikan
-          servoAz.write(constrain(currentAz + 90, 0, 180)); // Contoh offset servo
-          servoEl.write(constrain(currentEl, 0, 180));
-          
-          Serial.printf("Klik Diterima -> Gerak ke Az:%.2f, El:%.2f\n", currentAz, currentEl);
-        }
-      }
+// Fungsi Update Tabel Log Manual
+function updateManualLog(time, target) {
+    const body = document.getElementById('manualLogBody');
+    if(!body) return;
+    const row = body.insertRow(0);
+    row.style.color = "#ffdd00";
+    row.innerHTML = `<td>${time}</td><td>${target}</td><td>Executed</td>`;
+    if(body.rows.length > 10) body.deleteRow(10);
+}
+
+function makeTextSprite(message, x, y, z, color = "white", fontSize = 55) {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    canvas.width = 512; 
+    canvas.height = 256;
+    context.font = "Bold " + fontSize + "px Poppins, Arial";
+    context.fillStyle = color;
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.shadowColor = "black";
+    context.shadowBlur = 5;
+    context.fillText(message, 256, 128);
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+    const sprite = new THREE.Sprite(spriteMaterial);
+    sprite.position.set(x, y, z);
+    sprite.scale.set(2.5, 1.25, 1); 
+    return sprite;
+}
+
+function init3D() {
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+    camera.up.set(0, 0, 1); 
+    camera.position.set(10, -10, 10);
+
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    container.appendChild(renderer.domElement);
+
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.zoomSpeed = 0.5;
+
+    const axesHelper = new THREE.AxesHelper(6); 
+    scene.add(axesHelper);
+
+    scene.add(makeTextSprite("X (East)", 6.8, 0, 0, "#ff4d4d"));
+    scene.add(makeTextSprite("Y (North)", 0, 6.8, 0, "#4dff4d")); 
+    scene.add(makeTextSprite("Z (Zenith)", 0, 0, 6.5, "#4d4dff")); 
+
+    const rL = 5.8;
+    const dL = rL * 0.707;
+    scene.add(makeTextSprite("TIMUR (E)", rL, 0, 0.1, "#ffdd00", 60));
+    scene.add(makeTextSprite("BARAT (W)", -rL, 0, 0.1, "#ffffff", 60));
+    scene.add(makeTextSprite("UTARA (N)", 0, rL, 0.1, "#00f2fe", 60));
+    scene.add(makeTextSprite("SELATAN (S)", 0, -rL, 0.1, "#00f2fe", 60));
+    
+    const gridHelper = new THREE.GridHelper(12, 12, 0x444444, 0x222222);
+    gridHelper.rotation.x = Math.PI / 2; 
+    scene.add(gridHelper);
+
+    const ambientLight = new THREE.AmbientLight(0x404040, 2);
+    scene.add(ambientLight);
+    
+    const domeGeo = new THREE.SphereGeometry(5, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2);
+    const domeMat = new THREE.MeshBasicMaterial({ color: 0x00f2fe, wireframe: true, transparent: true, opacity: 0.12 });
+    dome = new THREE.Mesh(domeGeo, domeMat);
+    dome.rotation.x = Math.PI / 2; 
+    scene.add(dome);
+
+    const sunGeo = new THREE.SphereGeometry(0.4, 16, 16);
+    const sunMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+    sun = new THREE.Mesh(sunGeo, sunMat);
+    scene.add(sun);
+
+    animate();
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    const now = new Date();
+    if(document.getElementById('localTime')) document.getElementById('localTime').innerText = now.toLocaleTimeString();
+    if (isRealTimeMode) updateSunByTime(now);
+    controls.update();
+    renderer.render(scene, camera);
+}
+
+function updateSunVisual(az, el) {
+    const r = 5;
+    const radAz = (az) * (Math.PI / 180);
+    const radEl = (el) * (Math.PI / 180);
+    sun.position.x = r * Math.cos(radEl) * Math.sin(radAz);
+    sun.position.y = r * Math.cos(radEl) * Math.cos(radAz);
+    sun.position.z = r * Math.sin(radEl); 
+}
+
+function updateSunByTime(date) {
+    const totalMinutes = (date.getHours() * 60) + date.getMinutes();
+    let dayProgress = (totalMinutes - 360) / 720; 
+    if (dayProgress >= 0 && dayProgress <= 1) {
+        let el = Math.sin(dayProgress * Math.PI) * 90;
+        let az = 90 + (dayProgress * 180);
+        updateSunVisual(az, el);
     }
-  }
 }
 
-void setup() {
-  Serial.begin(115200);
-  ESP32PWM::allocateTimer(0);
-  ESP32PWM::allocateTimer(1);
-  servoAz.setPeriodHertz(50);
-  servoEl.setPeriodHertz(50);
-  servoAz.attach(pinServoAzimuth, 500, 2400);
-  servoEl.attach(pinServoElevation, 500, 2400);
+// TOGGLE REALTIME MODE
+container.addEventListener('dblclick', () => {
+    isRealTimeMode = !isRealTimeMode;
+    const display = document.getElementById('modeDisplay');
+    if(display) {
+        display.innerText = isRealTimeMode ? "REAL-TIME (CLOCK BASED)" : "MANUAL / INTERACTIVE";
+        display.style.color = isRealTimeMode ? "#ffdd00" : "#00f2fe";
+    }
+    // Kirim command mode balik ke ESP32
+    if(socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ mode: isRealTimeMode ? "auto" : "manual" }));
+    }
+});
 
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) { delay(500); Serial.print("."); }
-  Serial.println("\nWiFi Terhubung!");
-  Serial.println(WiFi.localIP());
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
 
-  ws.onEvent(onEvent);
-  server.addHandler(&ws);
-  server.begin();
-}
+// CLICK DOME TO COMMAND ESP32
+container.addEventListener('click', (event) => {
+    if (isRealTimeMode) return;
+    const rect = container.getBoundingClientRect();
+    mouse.x = ((event.clientX - rect.left) / container.clientWidth) * 2 - 1;
+    mouse.y = -((event.clientY - rect.top) / container.clientHeight) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObject(dome);
+    
+    if (intersects.length > 0) {
+        const p = intersects[0].point;
+        sun.position.copy(p);
+        let el = Math.asin(p.z / 5) * (180 / Math.PI); 
+        let az = Math.atan2(p.x, p.y) * (180 / Math.PI);
+        
+        // Update Panel
+        document.getElementById('valAzimuth').innerText = az.toFixed(2);
+        document.getElementById('valElevation').innerText = el.toFixed(2);
 
-void loop() {
-  static unsigned long lastMsg = 0;
-  if (millis() - lastMsg > 500) {
-    sendTelemetry();
-    lastMsg = millis();
-  }
+        // KIRIM DATA KE ESP32
+        if(socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                type: "cmd",
+                az: parseFloat(az.toFixed(2)),
+                el: parseFloat(el.toFixed(2))
+            }));
+        }
+        
+        // Log ke Manual Table
+        updateManualLog(new Date().toLocaleTimeString(), `${az.toFixed(1)}° / ${el.toFixed(1)}°`);
+    }
+});
 
-  if (!isManualMode) {
-    // Logika LDR Anda di sini
-    // servoAz.write(...);
-    // servoEl.write(...);
-  }
-  ws.cleanupClients();
-}
+window.onload = () => { init3D(); initWebSocket(); };
