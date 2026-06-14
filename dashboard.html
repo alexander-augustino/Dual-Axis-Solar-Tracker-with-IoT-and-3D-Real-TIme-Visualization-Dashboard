@@ -33,36 +33,22 @@
         </div>
     </section>
 
-    <section class="dashboard-grid" style="padding-top: 0;">
+    <section style="padding: 0 8% 40px 8%;">
         <div class="chart-card">
-            <h3 style="color: #ffdd00; margin-bottom: 10px;">Log Data Otomatis (Real-Time)</h3>
-            <div style="max-height: 350px; overflow-y: auto; padding-right: 5px;">
+            <h3 style="color: var(--accent); margin-bottom: 15px; font-size: 1.2rem;">Log Data</h3>
+            <div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
                 <table>
                     <thead>
                         <tr>
                             <th>Waktu</th>
                             <th>Lux</th>
                             <th>Volt</th>
-                            <th>Posisi (Az/El)</th>
+                            <th>Posisi Azimuth</th>
+                            <th>Posisi Elevation</th>
+                            <th>Keterangan Sistem</th>
                         </tr>
                     </thead>
-                    <tbody id="autoLogBody"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="chart-card">
-            <h3 style="color: var(--accent); margin-bottom: 10px;">Log Perintah Manual (Interactive)</h3>
-            <div style="max-height: 350px; overflow-y: auto; padding-right: 5px;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Waktu</th>
-                            <th>Target Az/El</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="manualLogBody"></tbody>
+                    <tbody id="mainLogBody"></tbody>
                 </table>
             </div>
         </div>
@@ -74,7 +60,7 @@
         Chart.defaults.color = '#ffffff';
 
         const chartAnimation = {
-            duration: 400, // Dipercepat dikit biar transisi pergerakan grafik lebih responsif
+            duration: 400, 
             easing: 'easeInOutQuart'
         };
 
@@ -83,7 +69,7 @@
         const luxChartInstance = new Chart(ctxLux, {
             type: 'line',
             data: {
-                labels: [], // Kosong di awal, akan di-plot dinamis oleh data ESP32
+                labels: [], 
                 datasets: [{
                     label: 'Intensitas Cahaya (Lux)',
                     data: [],
@@ -135,64 +121,53 @@
         // --- MANAJEMEN WEBSOCKET ---
         const gateway = `ws://192.168.102.82/ws`; 
         let socket;
-        let isServerOnline = false;       // Flag Pengunci: Mencegah plotting hantu saat alat mati
-        let currentSystemMode = "auto";   // State Tracker: Memisahkan log otomatis dan manual
+        let isServerOnline = false; // Flag Pengunci Grafik dan Tabel saat Offline
 
         function initWebSocket() {
             socket = new WebSocket(gateway);
             
             socket.onopen = () => {
-                isServerOnline = true; // Izinkan plotting dan perhitungan jika koneksi aktif
+                isServerOnline = true; // Kunci dibuka: Jalankan monitoring data
                 console.log("WebSocket terhubung. Memulai pemantauan data...");
             };
             
             socket.onmessage = (event) => {
-                // SOLUSI MASALAH 2: Jika alat offline/mati, blokir total seluruh rendering data!
+                // JIKA ALAT MATI / OFFLINE, BLOKIR SEMUA PROSES SUNTIK DATA & GRAFIK (FREEZE DATA TERAKHIR)
                 if (!isServerOnline) return;
 
                 const data = JSON.parse(event.data);
                 const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const logBody = document.getElementById('mainLogBody');
 
-                // Intersepsi perubahan mode dari pengiriman tombol/state web sebelah
-                if (data.mode) {
-                    currentSystemMode = data.mode; // Menangkap status "auto" atau "manual"
-                }
-
-                // 1. TANGKAP DATA TELEMETRI ALAT
-                if (data.type === "telemetry") {
+                // 1. DATA TELEMETRI REGULAR (OTOMATIS / TELEMETRI BERKALA)
+                if (data.type === "telemetry" && logBody) {
                     const azVal = Number(data.az) || 0;
                     const elVal = Number(data.el) || 0;
                     const luxVal = Number(data.lux) || 0;
                     const voltVal = Number(data.volt) || 0;
 
-                    // SOLUSI MASALAH 1: Cek state mode saat ini untuk menentukan penempatan tabel log
-                    if (currentSystemMode === "manual") {
-                        // Jika mode manual, arahkan data pergerakan ke tabel kanan (Log Perintah Manual)
-                        const manualBody = document.getElementById('manualLogBody');
-                        if (manualBody) {
-                            const row = manualBody.insertRow(0);
-                            row.style.color = "var(--accent)";
-                            row.innerHTML = `<td>${nowTime}</td><td>${azVal.toFixed(1)}° / ${elVal.toFixed(1)}°</td><td>Executed</td>`;
-                            if (manualBody.rows.length > 10) manualBody.deleteRow(10);
-                        }
-                    } else {
-                        // Jika mode auto (LDR), arahkan data berkala ke tabel kiri (Log Data Otomatis)
-                        const autoBody = document.getElementById('autoLogBody');
-                        if (autoBody) {
-                            const row = autoBody.insertRow(0);
-                            row.innerHTML = `<td>${nowTime}</td><td>${luxVal.toFixed(0)}</td><td>${voltVal.toFixed(2)} V</td><td>${azVal.toFixed(0)}°/${elVal.toFixed(0)}°</td>`;
-                            if (autoBody.rows.length > 15) autoBody.deleteRow(15);
-                        }
-                    }
+                    // Tambahkan baris baru ke tabel log tunggal
+                    const row = logBody.insertRow(0);
+                    row.innerHTML = `
+                        <td>${nowTime}</td>
+                        <td>${luxVal.toFixed(0)}</td>
+                        <td>${voltVal.toFixed(2)} V</td>
+                        <td>${azVal.toFixed(1)}°</td>
+                        <td>${elVal.toFixed(1)}°</td>
+                        <td style="color: #00ff88;">Tracking Berkala</td>
+                    `;
+                    
+                    // Batasi jumlah baris tabel agar tidak merusak performa memory browser
+                    if (logBody.rows.length > 25) logBody.deleteRow(25);
 
-                    // Jalankan perhitungan plotting titik baru ke dalam grafik
+                    // Suntik titik koordinat baru ke grafik linier
                     luxChartInstance.data.labels.push(nowTime);
                     voltChartInstance.data.labels.push(nowTime);
 
                     luxChartInstance.data.datasets[0].data.push(luxVal);
                     voltChartInstance.data.datasets[0].data.push(voltVal);
 
-                    // Geser grafik (shift) jika sumbu X sudah lebih dari 10 data agar tidak sesak
+                    // Geser grafik (shift) jika sumbu X sudah lebih dari 10 data agar tetap rapi
                     if (luxChartInstance.data.labels.length > 10) {
                         luxChartInstance.data.labels.shift();
                         luxChartInstance.data.datasets[0].data.shift();
@@ -200,28 +175,39 @@
                         voltChartInstance.data.datasets[0].data.shift();
                     }
 
-                    // Render perubahan grafik secara real-time
+                    // Re-render grafik secara langsung
                     luxChartInstance.update();
                     voltChartInstance.update();
                 } 
                 
-                // 2. TANGKAP INTERAKSI KLIK KUBAH LANGSUNG
-                else if (data.type === "manual_log" || data.type === "cmd") {
-                    currentSystemMode = "manual"; // Set mode ke manual karena ada interaksi user
-                    const manualBody = document.getElementById('manualLogBody');
-                    if (manualBody) {
-                        const row = manualBody.insertRow(0);
-                        row.style.color = "var(--accent)";
-                        row.innerHTML = `<td>${nowTime}</td><td>${Number(data.az).toFixed(1)}° / ${Number(data.el).toFixed(1)}°</td><td>Executed</td>`;
-                        if (manualBody.rows.length > 10) manualBody.deleteRow(10);
-                    }
+                // 2. DATA PERINTAH INTERAKTIF (KLIK DOME ATAU SEJENISNYA)
+                else if ((data.type === "manual_log" || data.type === "cmd") && logBody) {
+                    const azCmd = Number(data.az) || 0;
+                    const elCmd = Number(data.el) || 0;
+
+                    // Ambil nilai terakhir dari dataset grafik jika sensor lux/volt absen di tipe pesan ini
+                    const lastLux = luxChartInstance.data.datasets[0].data.slice(-1)[0] || 0;
+                    const lastVolt = voltChartInstance.data.datasets[0].data.slice(-1)[0] || 0;
+
+                    const row = logBody.insertRow(0);
+                    row.style.background = "rgba(0, 242, 254, 0.05)"; // Beri highlight warna cyan tipis biar estetik
+                    row.innerHTML = `
+                        <td>${nowTime}</td>
+                        <td>${Number(lastLux).toFixed(0)}</td>
+                        <td>${Number(lastVolt).toFixed(2)} V</td>
+                        <td style="color: var(--accent); font-weight: 600;">${azCmd.toFixed(1)}°</td>
+                        <td style="color: var(--accent); font-weight: 600;">${elCmd.toFixed(1)}°</td>
+                        <td style="color: var(--accent); font-weight: 600;">Perintah Manual</td>
+                    `;
+                    
+                    if (logBody.rows.length > 25) logBody.deleteRow(25);
                 }
             };
 
             socket.onclose = () => {
-                isServerOnline = false; // SOLUSI MASALAH 2: Kunci dimatikan, grafik otomatis diam menahan data terakhir
+                isServerOnline = false; // Kunci dimatikan: Grafik dan tabel otomatis membeku menahan kondisi terakhir
                 console.log("WebSocket terputus dari ESP32. Mencoba menghubungkan kembali...");
-                setTimeout(initWebSocket, 2000); // Auto reconnect jika jaringan ESP terganggu
+                setTimeout(initWebSocket, 2000); 
             };
         }
 
