@@ -22,7 +22,7 @@ body {
     flex-direction: column;
 }
 
-/* --- Navbar --- */
+/*bagian navigasi barnya*/
 nav {
     display: flex;
     justify-content: space-between;
@@ -48,7 +48,7 @@ nav ul li a {
 
 nav ul li a:hover, nav ul li a.active { color: var(--accent); }
 
-/* --- Hero Section --- */
+/*hero section (tampilan utamanya)*/
 .hero {
     flex: 1; 
     display: flex;
@@ -117,7 +117,7 @@ nav ul li a:hover, nav ul li a.active { color: var(--accent); }
     box-shadow: 0 10px 20px rgba(0, 242, 254, 0.2);
 }
 
-/* --- Info/About Section --- */
+/*section about*/
 .info-section {
     padding: 80px 8%;
     text-align: center;
@@ -156,7 +156,7 @@ nav ul li a:hover, nav ul li a.active { color: var(--accent); }
     box-shadow: 0 10px 30px rgba(0, 242, 254, 0.1);
 }
 
-/* Style Khusus Latar Belakang (Justify Text) */
+/*style latar belakang*/
 .card-large {
     max-width: 1000px;
     text-align: justify;
@@ -169,7 +169,7 @@ nav ul li a:hover, nav ul li a.active { color: var(--accent); }
     color: var(--text-primary);
 }
 
-/* --- Tracker & Dashboard Styles --- */
+/*tampilan yang tracker*/
 .tracker-container {
     display: flex;
     height: calc(100vh - 80px);
@@ -227,7 +227,7 @@ th, td {
 
 th { color: var(--accent); }
 
-/* Responsive Adjustments */
+/*adjustment konten dikit*/
 @media (max-width: 768px) {
     .hero-content h1 { font-size: 2.5rem; }
     .dashboard-grid { grid-template-columns: 1fr; }
